@@ -10,7 +10,7 @@ import { Page } from "azure-devops-ui/Page";
 
 import { showRootComponent } from "../Common";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
-import { WorkItem, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItem, WorkItemTrackingRestClient, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
 import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkItemColumn, TeamSettingsIteration, WorkRestClient } from "azure-devops-extension-api/Work";
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
@@ -18,6 +18,7 @@ import { ListSelection } from "azure-devops-ui/List";
 
 interface IHubContentState {
 	project: string;
+	projectName: string;
 	teams: WebApiTeam[];
 	teamIterations: TeamSettingsIteration[];
 	selectedTeam: string;
@@ -53,6 +54,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 		this.state = {
 			project: '',
+			projectName: '',
 			teams: [],
 			teamIterations: [],
 			selectedTeam: '',
@@ -138,7 +140,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			this.showToast('No projects found.');
 			return;
 		}
-		this.setState({ project: this.project.id });
+		this.setState({ project: this.project.id, projectName: this.project.name });
 
 		// Get teams.
 		const coreClient = getClient(CoreRestClient);
@@ -221,8 +223,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			this.setState({
 				selectedTeamIterationName: iterationName
 			});
-			// TODO
-			//this.getTeamIterationData();
+			this.getTeamIterationData();
 		}
 	}
 
@@ -258,9 +259,27 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		this.setState({
 			selectedTeamIterationName: item.text ?? ''
 		});
-		// TODO
-		//this.getTeamIterationData();
+		this.getTeamIterationData();
 		this.updateQueryParams();
+	}
+
+	private async getTeamIterationData() {
+		await SDK.ready();
+		const teamContext = { projectId: this.state.project, teamId: this.state.selectedTeam, project: "", team: "" };
+
+		const selectedIterationPath = this.state.projectName + '\\' + this.state.selectedTeamIterationName;
+
+		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
+
+		const asdf = await workItemTrackingClient
+			.queryByWiql({ query: "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });//[System.WorkItemType] = 'Task' AND
+		console.log(asdf);
+
+		let data = asdf.workItems;
+		console.log(data);
+
+		const asdf2 = await workItemTrackingClient.getRootNodes(this.state.project, 5);
+		console.log(asdf2);
 	}
 
 	private async getQueryParams() {
