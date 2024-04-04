@@ -10,7 +10,7 @@ import { Page } from "azure-devops-ui/Page";
 
 import { showRootComponent } from "../Common";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
-import { WorkItem, WorkItemTrackingRestClient, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItem, WorkItemReference, WorkItemTrackingRestClient, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
 import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkItemColumn, TeamSettingsIteration, WorkRestClient } from "azure-devops-extension-api/Work";
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
@@ -45,6 +45,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 	private teamSelection = new ListSelection();
 	private teamIterationSelection = new ListSelection();
+
+	private workItems: WorkItem[] = [];
 
 	private queryParamsTeam: string = '';
 	private queryParamsTeamIteration: string = '';
@@ -124,6 +126,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 					onSelect={this.handleSelectTeamIteration}
 					dismissOnSelect={true}
 				/>
+
+				<h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
 
 			</Page>
 		);
@@ -267,19 +271,37 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		await SDK.ready();
 		const teamContext = { projectId: this.state.project, teamId: this.state.selectedTeam, project: "", team: "" };
 
-		const selectedIterationPath = this.state.projectName + '\\' + this.state.selectedTeamIterationName;
+		const selectedIteration = this.state.teamIterations.find(i => i.id === this.state.selectedTeamIteration);
+		if (!selectedIteration) {
+			this.showToast('There was an issue loading the selected iteration.');
+			return;
+		}
+		const selectedIterationPath = selectedIteration.path;
 
 		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
 
-		const asdf = await workItemTrackingClient
-			.queryByWiql({ query: "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });//[System.WorkItemType] = 'Task' AND
-		console.log(asdf);
+		const workItemsEverInIteration = await workItemTrackingClient
+			.queryByWiql({ query: "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
 
-		let data = asdf.workItems;
-		console.log(data);
+		if (!workItemsEverInIteration) {
+			this.showToast('There was an issue getting the work items for the selected iteration.');
+			return;
+		}
 
-		const asdf2 = await workItemTrackingClient.getRootNodes(this.state.project, 5);
-		console.log(asdf2);
+		//console.log(selectedIteration);
+		//console.log(selectedIterationPath);
+		//console.log(workItemsEverInIteration);
+
+		this.getWorkItemData(workItemsEverInIteration.workItems);
+	}
+
+	private async getWorkItemData(workItems: WorkItemReference[]) {
+		const witClient = getClient(WorkItemTrackingRestClient);
+		// TODO handle more than 200 work items
+		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
+		this.setState({ workItems: this.workItems });
+
+		console.log(this.workItems);
 	}
 
 	private async getQueryParams() {
