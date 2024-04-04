@@ -120,10 +120,22 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		}
 
 		function displayUserStories(workItems: WorkItem[]) {
-			const workItemDisplay = workItems.map(workItem => {
+			const typedWorkItems = workItems.map(workItem => {
+				const typedWorkItem = {
+					id: workItem.id,
+					title: workItem.fields['System.Title'],
+					url: workItem.url.replace('/_apis/wit/workItems/', '/_workitems/edit/'),
+					storyPoints: +(workItem.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0),
+				};
+
+				return typedWorkItem;
+			});
+
+
+			const workItemDisplay = typedWorkItems.map(workItem => {
 				return (
 					<div>
-						<a href={workItem.url}>{workItem.id}</a> : {workItem.fields['System.Title']}
+						<a href={workItem.url}>{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
 					</div>
 				)
 			});
@@ -132,7 +144,27 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<React.Fragment>
 					{workItemDisplay}
 				</React.Fragment>
-			)
+			);
+		}
+
+		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[]) {
+			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {
+				return (
+					<div>
+						{wiHistory.id}<br />
+						<pre>
+							{JSON.stringify(wiHistory.history, null, 2)}
+						</pre>
+						<hr />
+					</div>
+				)
+			});
+
+			return (
+				<React.Fragment>
+					{workItemHistoryDisplay}
+				</React.Fragment>
+			);
 		}
 
 
@@ -174,6 +206,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				}</pre>
 
 				<hr />
+
+				{displayUserStoryHistory(this.state.workItemsHistory)}
 
 				<pre>{
 					JSON.stringify(this.state.workItemsHistory, null, 2)
