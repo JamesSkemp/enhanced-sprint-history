@@ -36,6 +36,7 @@ interface IHubContentState {
 	 * All work item types, such as Feature, Epic, Bug, Task, User Story.
 	 */
 	workItemTypes: WorkItemType[];
+	workItemsHistory: any[];
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
@@ -66,7 +67,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			taskboardWorkItemColumns: [],
 			taskboardColumns: [],
 			workItems: [],
-			workItemTypes: []
+			workItemTypes: [],
+			workItemsHistory: []
 		};
 	}
 
@@ -129,6 +131,15 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 				<h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
 
+				<pre>{
+					JSON.stringify(this.state.workItems, null, 2)
+				}</pre>
+
+				<hr />
+
+				<pre>{
+					JSON.stringify(this.state.workItemsHistory, null, 2)
+				}</pre>
 			</Page>
 		);
 	}
@@ -288,10 +299,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			return;
 		}
 
-		//console.log(selectedIteration);
-		//console.log(selectedIterationPath);
-		//console.log(workItemsEverInIteration);
-
 		this.getWorkItemData(workItemsEverInIteration.workItems);
 	}
 
@@ -300,8 +307,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		// TODO handle more than 200 work items; this endpoint only accepts/returns up to 200
 		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
 		this.setState({ workItems: this.workItems });
-
-		console.log(this.workItems);
 
 		let workItemsHistory = [];
 
@@ -312,8 +317,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			workItemsHistory.push({ id: element.id, history: workItemHistory });
 		}
 
-		console.log(workItemsHistory);
-
+		this.setState({ workItemsHistory: workItemsHistory });
 	}
 
 	private async getQueryParams() {
