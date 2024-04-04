@@ -1,5 +1,13 @@
 @import "node_modules/azure-devops-ui/Core/_platformCommon.scss";
 
+h2 {
+	margin-bottom: 0;
+}
+
+h3 {
+	margin-top: 0;
+}
+
 .enhanced-sprint-history {
 	font-size: $fontSizeM;
 	padding: 0 1em;

@@ -10,11 +10,16 @@ import { Page } from "azure-devops-ui/Page";
 
 import { showRootComponent } from "../Common";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
-import { WorkItem, WorkItemReference, WorkItemTrackingRestClient, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItem, WorkItemReference, WorkItemTrackingRestClient, WorkItemType, WorkItemUpdate } from "azure-devops-extension-api/WorkItemTracking";
 import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkItemColumn, TeamSettingsIteration, WorkRestClient } from "azure-devops-extension-api/Work";
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
+
+interface IHubWorkItemHistory {
+	id: number;
+	history: WorkItemUpdate[];
+}
 
 interface IHubContentState {
 	project: string;
@@ -23,7 +28,8 @@ interface IHubContentState {
 	teamIterations: TeamSettingsIteration[];
 	selectedTeam: string;
 	selectedTeamName: string;
-	selectedTeamIteration: string;
+	selectedTeamIteration: TeamSettingsIteration | undefined;
+	selectedTeamIterationId: string;
 	selectedTeamIterationName: string;
 	iterationWorkItems?: IterationWorkItems;
 	taskboardWorkItemColumns: TaskboardWorkItemColumn[];
@@ -36,7 +42,7 @@ interface IHubContentState {
 	 * All work item types, such as Feature, Epic, Bug, Task, User Story.
 	 */
 	workItemTypes: WorkItemType[];
-	workItemsHistory: any[];
+	workItemsHistory: IHubWorkItemHistory[];
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
@@ -62,7 +68,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			teamIterations: [],
 			selectedTeam: '',
 			selectedTeamName: '',
-			selectedTeamIteration: '',
+			selectedTeamIteration: undefined,
+			selectedTeamIterationId: '',
 			selectedTeamIterationName: '',
 			taskboardWorkItemColumns: [],
 			taskboardColumns: [],
@@ -102,6 +109,33 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			}
 		}
 
+		function sprintDatesHeading(selectedTeamIteration: TeamSettingsIteration | undefined) {
+			if (selectedTeamIteration) {
+				return (
+					<h3>{selectedTeamIteration.attributes.startDate.toLocaleDateString()} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString()}</h3>
+				);
+			} else {
+				return null;
+			}
+		}
+
+		function displayUserStories(workItems: WorkItem[]) {
+			const workItemDisplay = workItems.map(workItem => {
+				return (
+					<div>
+						<a href={workItem.url}>{workItem.id}</a> : {workItem.fields['System.Title']}
+					</div>
+				)
+			});
+
+			return (
+				<React.Fragment>
+					{workItemDisplay}
+				</React.Fragment>
+			)
+		}
+
+
 		return (
 			<Page className="enhanced-sprint-history flex-grow">
 				<Header title="Enhanced Sprint History"
@@ -130,6 +164,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				/>
 
 				<h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
+
+				{sprintDatesHeading(this.state.selectedTeamIteration)}
+
+				{displayUserStories(this.state.workItems)}
 
 				<pre>{
 					JSON.stringify(this.state.workItems, null, 2)
@@ -214,11 +252,13 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		}
 		this.setState({ teamIterations: this.teamIterations });
 
+		let iteration;
 		let iterationId = "";
 		let iterationName = "";
 		if (this.teamIterations.length === 1) {
 			this.teamIterationSelection.select(0);
 
+			iteration = this.teamIterations[0];
 			iterationId = this.teamIterations[0].id;
 			iterationName = this.teamIterations[0].name;
 		} else {
@@ -226,6 +266,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			if (currentIteration) {
 				this.teamIterationSelection.select(this.teamIterations.indexOf(currentIteration));
 
+				iteration = currentIteration;
 				iterationId = currentIteration.id;
 				iterationName = currentIteration.name;
 			}
@@ -233,7 +274,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 		if (iterationId !== '') {
 			this.setState({
-				selectedTeamIteration: iterationId
+				selectedTeamIteration: iteration
+			});
+			this.setState({
+				selectedTeamIterationId: iterationId
 			});
 			this.setState({
 				selectedTeamIterationName: iterationName
@@ -258,7 +302,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			selectedTeamName: item.text ?? ''
 		});
 		this.setState({
-			selectedTeamIteration: ''
+			selectedTeamIteration: undefined
+		});
+		this.setState({
+			selectedTeamIterationId: ''
 		});
 		this.setState({
 			selectedTeamIterationName: ''
@@ -269,7 +316,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 	private handleSelectTeamIteration = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
 		this.setState({
-			selectedTeamIteration: item.id
+			selectedTeamIteration: this.state.teamIterations.find(ti => ti.id === item.id)
+		});
+		this.setState({
+			selectedTeamIterationId: item.id
 		});
 		this.setState({
 			selectedTeamIterationName: item.text ?? ''
@@ -282,7 +332,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		await SDK.ready();
 		const teamContext = { projectId: this.state.project, teamId: this.state.selectedTeam, project: "", team: "" };
 
-		const selectedIteration = this.state.teamIterations.find(i => i.id === this.state.selectedTeamIteration);
+		const selectedIteration = this.state.teamIterations.find(i => i.id === this.state.selectedTeamIterationId);
 		if (!selectedIteration) {
 			this.showToast('There was an issue loading the selected iteration.');
 			return;
@@ -292,7 +342,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
 
 		const workItemsEverInIteration = await workItemTrackingClient
-			.queryByWiql({ query: "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
+			.queryByWiql({ query: "Select [System.Id] From WorkItems Where [System.WorkItemType] = 'User Story' AND EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
 
 		if (!workItemsEverInIteration) {
 			this.showToast('There was an issue getting the work items for the selected iteration.');
@@ -308,7 +358,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
 		this.setState({ workItems: this.workItems });
 
-		let workItemsHistory = [];
+		let workItemsHistory: IHubWorkItemHistory[] = [];
 
 		for (let index = 0; index < this.workItems.length; index++) {
 			const element = this.workItems[index];
@@ -324,12 +374,12 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const navService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 		const hash = await navService.getQueryParams();
 
-		return { queryTeam: hash['selectedTeam'], queryTeamIteration: hash['selectedTeamIteration'] };
+		return { queryTeam: hash['selectedTeam'], queryTeamIteration: hash['selectedTeamIterationId'] };
 	}
 
 	private updateQueryParams = async () => {
 		const navService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
-		navService.setQueryParams({ selectedTeam: "" + this.state.selectedTeam, selectedTeamIteration: this.state.selectedTeamIteration });
+		navService.setQueryParams({ selectedTeam: "" + this.state.selectedTeam, selectedTeamIterationId: this.state.selectedTeamIterationId });
 		navService.setDocumentTitle("" + this.state.selectedTeamName + " : " + this.state.selectedTeamIterationName + " - Iteration Work Items");
 	}
 }
