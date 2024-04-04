@@ -297,11 +297,23 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 	private async getWorkItemData(workItems: WorkItemReference[]) {
 		const witClient = getClient(WorkItemTrackingRestClient);
-		// TODO handle more than 200 work items
+		// TODO handle more than 200 work items; this endpoint only accepts/returns up to 200
 		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
 		this.setState({ workItems: this.workItems });
 
 		console.log(this.workItems);
+
+		let workItemsHistory = [];
+
+		for (let index = 0; index < this.workItems.length; index++) {
+			const element = this.workItems[index];
+
+			const workItemHistory = await witClient.getUpdates(element.id);
+			workItemsHistory.push({ id: element.id, history: workItemHistory });
+		}
+
+		console.log(workItemsHistory);
+
 	}
 
 	private async getQueryParams() {
