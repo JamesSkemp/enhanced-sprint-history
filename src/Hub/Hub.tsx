@@ -147,8 +147,17 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			);
 		}
 
-		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[]) {
+		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
+			const asdf = workItemHistory.map(wiHistory => {
+				console.log(wiHistory);
+				return {
+					id: wiHistory.id,
+					firstRevision: selectedIterationPath ? wiHistory.history.find(wi => wi.fields && wi.fields.hasOwnProperty('System.IterationPath') && wi.fields['System.IterationPath'] && (wi.fields['System.IterationPath'].newValue ?? '') === selectedIterationPath) : undefined
+				};
+			});
+
 			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {
+				console.log(asdf);
 				return (
 					<div>
 						{wiHistory.id}<br />
@@ -199,16 +208,20 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
+				<h4>TODO User Stories</h4>
 				{displayUserStories(this.state.workItems)}
 
+				<h4>TODO User Stories Dump</h4>
 				<pre>{
 					JSON.stringify(this.state.workItems, null, 2)
 				}</pre>
 
 				<hr />
 
-				{displayUserStoryHistory(this.state.workItemsHistory)}
+				<h4>TODO User Story History</h4>
+				{displayUserStoryHistory(this.state.workItemsHistory, this.state.selectedTeamIteration?.path)}
 
+				<h4>TODO User Story History Dump</h4>
 				<pre>{
 					JSON.stringify(this.state.workItemsHistory, null, 2)
 				}</pre>
