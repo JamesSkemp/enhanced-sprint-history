@@ -18,7 +18,7 @@ import { ListSelection } from "azure-devops-ui/List";
 
 interface IHubWorkItemHistory {
 	id: number;
-	history: WorkItemUpdate[];
+	revisions: WorkItem[];
 }
 
 interface IHubContentState {
@@ -150,19 +150,30 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
 			const asdf = workItemHistory.map(wiHistory => {
 				console.log(wiHistory);
+
+				const firstRevision = selectedIterationPath ? wiHistory.revisions.find(wi => wi.fields && wi.fields.hasOwnProperty('System.IterationPath') && wi.fields['System.IterationPath'] && wi.fields['System.IterationPath'] === selectedIterationPath) : undefined;
+				if (firstRevision) {
+					console.log(firstRevision.fields['System.IterationPath']);
+					console.log(firstRevision.fields['System.ChangedDate']?.toLocaleDateString());
+					console.log(firstRevision.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0);
+				}
+
 				return {
 					id: wiHistory.id,
-					firstRevision: selectedIterationPath ? wiHistory.history.find(wi => wi.fields && wi.fields.hasOwnProperty('System.IterationPath') && wi.fields['System.IterationPath'] && (wi.fields['System.IterationPath'].newValue ?? '') === selectedIterationPath) : undefined
+					firstRevision: firstRevision
 				};
 			});
 
-			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {
+			if (asdf?.length > 0) {
 				console.log(asdf);
+			}
+
+			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {
 				return (
 					<div>
 						{wiHistory.id}<br />
 						<pre>
-							{JSON.stringify(wiHistory.history, null, 2)}
+							{JSON.stringify(wiHistory.revisions, null, 2)}
 						</pre>
 						<hr />
 					</div>
@@ -410,8 +421,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		for (let index = 0; index < this.workItems.length; index++) {
 			const element = this.workItems[index];
 
-			const workItemHistory = await witClient.getUpdates(element.id);
-			workItemsHistory.push({ id: element.id, history: workItemHistory });
+			const workItemRevisions = await witClient.getRevisions(element.id);
+			workItemsHistory.push({ id: element.id, revisions: workItemRevisions });
 		}
 
 		this.setState({ workItemsHistory: workItemsHistory });
