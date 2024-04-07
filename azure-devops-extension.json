@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "enhanced-sprint-history",
     "publisher": "JamesSkemp",
-    "version": "0.0.52",
+    "version": "0.0.53",
     "name": "Enhanced Sprint History",
     "description": "Azure DevOps Extension",
     "categories": [
@@ -20,6 +20,15 @@
         "details": {
             "path": "overview.md"
         }
+    },
+    "links": {
+        "learn": {
+            "uri": "https://git.ebacher-skemp.com/strivinglife/enhanced-sprint-history"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "uri": "https://git.ebacher-skemp.com/strivinglife/enhanced-sprint-history"
     },
     "files": [
         {
