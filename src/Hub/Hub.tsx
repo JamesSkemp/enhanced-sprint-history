@@ -131,7 +131,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				return typedWorkItem;
 			});
 
-
 			const workItemDisplay = typedWorkItems.map(workItem => {
 				return (
 					<div>
@@ -149,14 +148,31 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
 			const asdf = workItemHistory.map(wiHistory => {
-				console.log(wiHistory);
+				const typedWorkItems = wiHistory.revisions.map(workItem => {
+					const typedWorkItem = {
+						id: workItem.id,
+						title: workItem.fields['System.Title'],
+						url: workItem.url.replace('/_apis/wit/workItems/', '/_workitems/edit/'),
+						iterationPath: workItem.fields['System.IterationPath'] ?? '',
+						storyPoints: +(workItem.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0),
+						changedDate: workItem.fields['System.ChangedDate']?.toLocaleDateString(),
+						changedDateFull: workItem.fields['System.ChangedDate'],
+						state: workItem.fields['System.State'],
+					};
 
-				const firstRevision = selectedIterationPath ? wiHistory.revisions.find(wi => wi.fields && wi.fields.hasOwnProperty('System.IterationPath') && wi.fields['System.IterationPath'] && wi.fields['System.IterationPath'] === selectedIterationPath) : undefined;
-				if (firstRevision) {
-					console.log(firstRevision.fields['System.IterationPath']);
-					console.log(firstRevision.fields['System.ChangedDate']?.toLocaleDateString());
-					console.log(firstRevision.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0);
-				}
+					return typedWorkItem;
+				});
+
+				console.log(wiHistory);
+				console.log(`Typed Work Items for ${wiHistory.id}:`);
+				console.log(typedWorkItems);
+
+				const firstRevision = selectedIterationPath ? typedWorkItems.find(wi => wi.iterationPath === selectedIterationPath) : undefined;
+				/*if (firstRevision) {
+					console.log(firstRevision.iterationPath);
+					console.log(firstRevision.changedDate);
+					console.log(firstRevision.storyPoints);
+				}*/
 
 				return {
 					id: wiHistory.id,
