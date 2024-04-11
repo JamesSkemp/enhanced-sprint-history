@@ -15,11 +15,8 @@ import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkIte
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
-
-interface IHubWorkItemHistory {
-	id: number;
-	revisions: WorkItem[];
-}
+import { IHubWorkItemHistory, ITypedWorkItem } from "./HubInterfaces";
+import { getTypedWorkItem } from "./HubUtils";
 
 interface IHubContentState {
 	project: string;
@@ -120,16 +117,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		}
 
 		function displayUserStories(workItems: WorkItem[]) {
-			const typedWorkItems = workItems.map(workItem => {
-				const typedWorkItem = {
-					id: workItem.id,
-					title: workItem.fields['System.Title'],
-					url: workItem.url.replace('/_apis/wit/workItems/', '/_workitems/edit/'),
-					storyPoints: +(workItem.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0),
-				};
-
-				return typedWorkItem;
-			});
+			const typedWorkItems = workItems.map(workItem => getTypedWorkItem(workItem));
 
 			const workItemDisplay = typedWorkItems.map(workItem => {
 				return (
@@ -148,24 +136,11 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
 			const asdf = workItemHistory.map(wiHistory => {
-				const typedWorkItems = wiHistory.revisions.map(workItem => {
-					const typedWorkItem = {
-						id: workItem.id,
-						title: workItem.fields['System.Title'],
-						url: workItem.url.replace('/_apis/wit/workItems/', '/_workitems/edit/'),
-						iterationPath: workItem.fields['System.IterationPath'] ?? '',
-						storyPoints: +(workItem.fields['Microsoft.VSTS.Scheduling.StoryPoints'] ?? 0),
-						changedDate: workItem.fields['System.ChangedDate']?.toLocaleDateString(),
-						changedDateFull: workItem.fields['System.ChangedDate'],
-						state: workItem.fields['System.State'],
-					};
-
-					return typedWorkItem;
-				});
+				const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
 
 				console.log(wiHistory);
 				console.log(`Typed Work Items for ${wiHistory.id}:`);
-				console.log(typedWorkItems);
+				console.table(typedWorkItems);
 
 				const firstRevision = selectedIterationPath ? typedWorkItems.find(wi => wi.iterationPath === selectedIterationPath) : undefined;
 				/*if (firstRevision) {
@@ -202,7 +177,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				</React.Fragment>
 			);
 		}
-
 
 		return (
 			<Page className="enhanced-sprint-history flex-grow">
@@ -368,7 +342,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		});
 	}
 
-	private handleSelectTeam = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
+	private handleSelectTeam = (_event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
 		this.setState({
 			selectedTeam: item.id
 		});
@@ -388,7 +362,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		this.updateQueryParams();
 	}
 
-	private handleSelectTeamIteration = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
+	private handleSelectTeamIteration = (_event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
 		this.setState({
 			selectedTeamIteration: this.state.teamIterations.find(ti => ti.id === item.id)
 		});
