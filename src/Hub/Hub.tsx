@@ -15,8 +15,8 @@ import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkIte
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
-import { IHubWorkItemHistory, ITypedWorkItem } from "./HubInterfaces";
-import { getTypedWorkItem } from "./HubUtils";
+import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
+import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 
 interface IHubContentState {
 	project: string;
@@ -135,7 +135,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		}
 
 		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
-			const asdf = workItemHistory.map(wiHistory => {
+			const asdf: IHubWorkItemIterationRevisions[] = workItemHistory.map(wiHistory => {
 				const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
 
 				console.log(wiHistory);
@@ -151,12 +151,20 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 				return {
 					id: wiHistory.id,
-					firstRevision: firstRevision
+					iterationPath: selectedIterationPath,
+					firstRevision: firstRevision,
+					relevantRevisions: selectedIterationPath ? getIterationRelevantWorkItems(typedWorkItems, selectedIterationPath) : []
 				};
 			});
 
 			if (asdf?.length > 0) {
-				console.log(asdf);
+				console.log(getFlattenedRelevantRevisions(asdf));
+				asdf.forEach(element => {
+					console.groupCollapsed(element.id);
+					console.log(element.firstRevision);
+					console.table(element.relevantRevisions);
+					console.groupEnd();
+				});
 			}
 
 			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {

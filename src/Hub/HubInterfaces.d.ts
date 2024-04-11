@@ -9,9 +9,17 @@ export interface ITypedWorkItem {
 	changedDate: any;
 	changedDateFull: any;
 	state: any;
+	revision: number;
 }
 
 export interface IHubWorkItemHistory {
 	id: number;
 	revisions: WorkItem[];
+}
+
+export interface IHubWorkItemIterationRevisions {
+	id: number;
+	iterationPath: string | undefined;
+	firstRevision: ITypedWorkItem | undefined;
+	relevantRevisions: ITypedWorkItem[];
 }

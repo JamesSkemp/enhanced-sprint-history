@@ -1,5 +1,5 @@
 import { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
-import { ITypedWorkItem } from "./HubInterfaces";
+import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
 
 export function getTypedWorkItem(workItem: WorkItem): ITypedWorkItem {
 	return {
@@ -11,5 +11,19 @@ export function getTypedWorkItem(workItem: WorkItem): ITypedWorkItem {
 		changedDate: workItem.fields['System.ChangedDate']?.toLocaleDateString(),
 		changedDateFull: workItem.fields['System.ChangedDate'],
 		state: workItem.fields['System.State'],
+		revision: workItem.rev,
 	};
+}
+
+export function getIterationRelevantWorkItems(typedWorkItems: ITypedWorkItem[], iterationPath: string): ITypedWorkItem[] {
+	const firstRevision = typedWorkItems.find(wi => wi.iterationPath === iterationPath);
+	if (!firstRevision) {
+		return [];
+	}
+
+	return typedWorkItems.filter(wi => wi.revision >= firstRevision.revision);
+}
+
+export function getFlattenedRelevantRevisions(workItemHistory: IHubWorkItemIterationRevisions[]): ITypedWorkItem[] {
+	return workItemHistory.reduce((accumulator: ITypedWorkItem[], value) => accumulator.concat(value.relevantRevisions), []);
 }
