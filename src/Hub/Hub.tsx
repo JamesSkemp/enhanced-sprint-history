@@ -10,13 +10,13 @@ import { Page } from "azure-devops-ui/Page";
 
 import { showRootComponent } from "../Common";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
-import { WorkItem, WorkItemReference, WorkItemTrackingRestClient, WorkItemType, WorkItemUpdate } from "azure-devops-extension-api/WorkItemTracking";
-import { IterationWorkItems, TaskboardColumn, TaskboardColumns, TaskboardWorkItemColumn, TeamSettingsIteration, WorkRestClient } from "azure-devops-extension-api/Work";
+import { WorkItem, WorkItemReference, WorkItemTrackingRestClient, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
+import { IterationWorkItems, TaskboardColumn, TaskboardWorkItemColumn, TeamSettingsIteration, WorkRestClient } from "azure-devops-extension-api/Work";
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
-import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
-import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
+import { IHubWorkItemHistory } from "./HubInterfaces";
+import { getTypedWorkItem } from "./HubUtils";
 import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
 
 interface IHubContentState {
@@ -135,43 +135,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			);
 		}
 
-		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedTeamIteration: TeamSettingsIteration | undefined) {
-			const selectedIterationPath = selectedTeamIteration ? selectedTeamIteration.path : undefined;
-
-			const asdf: IHubWorkItemIterationRevisions[] = workItemHistory.map(wiHistory => {
-				const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
-
-				console.log(wiHistory);
-				console.log(`Typed Work Items for ${wiHistory.id}:`);
-				console.table(typedWorkItems);
-
-				const firstRevision = selectedIterationPath ? typedWorkItems.find(wi => wi.iterationPath === selectedIterationPath) : undefined;
-
-				return {
-					id: wiHistory.id,
-					iterationPath: selectedIterationPath,
-					firstRevision: firstRevision,
-					relevantRevisions: selectedIterationPath ? getIterationRelevantWorkItems(typedWorkItems, selectedIterationPath) : []
-				};
-			});
-
-			if (asdf?.length > 0) {
-				console.log(getFlattenedRelevantRevisions(asdf));
-				asdf.forEach(element => {
-					console.groupCollapsed(element.id);
-					console.log(element.firstRevision);
-					console.table(element.relevantRevisions);
-					console.groupEnd();
-				});
-			}
-
-			return (
-				<React.Fragment>
-					<IterationHistoryDisplay iteration={selectedTeamIteration} workItems={getFlattenedRelevantRevisions(asdf)} />
-				</React.Fragment>
-			);
-		}
-
 		return (
 			<Page className="enhanced-sprint-history flex-grow">
 				<Header title="Enhanced Sprint History"
@@ -209,7 +172,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<hr />
 
 				<h4>TODO User Story History</h4>
-				{displayUserStoryHistory(this.state.workItemsHistory, this.state.selectedTeamIteration)}
+				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 			</Page>
 		);
 	}
