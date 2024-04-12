@@ -17,6 +17,7 @@ import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
+import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
 
 interface IHubContentState {
 	project: string;
@@ -134,7 +135,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			);
 		}
 
-		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedIterationPath: string | undefined) {
+		function displayUserStoryHistory(workItemHistory: IHubWorkItemHistory[], selectedTeamIteration: TeamSettingsIteration | undefined) {
+			const selectedIterationPath = selectedTeamIteration ? selectedTeamIteration.path : undefined;
+
 			const asdf: IHubWorkItemIterationRevisions[] = workItemHistory.map(wiHistory => {
 				const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
 
@@ -143,11 +146,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				console.table(typedWorkItems);
 
 				const firstRevision = selectedIterationPath ? typedWorkItems.find(wi => wi.iterationPath === selectedIterationPath) : undefined;
-				/*if (firstRevision) {
-					console.log(firstRevision.iterationPath);
-					console.log(firstRevision.changedDate);
-					console.log(firstRevision.storyPoints);
-				}*/
 
 				return {
 					id: wiHistory.id,
@@ -167,21 +165,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				});
 			}
 
-			const workItemHistoryDisplay = workItemHistory.map(wiHistory => {
-				return (
-					<div>
-						{wiHistory.id}<br />
-						<pre>
-							{JSON.stringify(wiHistory.revisions, null, 2)}
-						</pre>
-						<hr />
-					</div>
-				)
-			});
-
 			return (
 				<React.Fragment>
-					{workItemHistoryDisplay}
+					<IterationHistoryDisplay iteration={selectedTeamIteration} workItems={getFlattenedRelevantRevisions(asdf)} />
 				</React.Fragment>
 			);
 		}
@@ -220,20 +206,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<h4>TODO User Stories</h4>
 				{displayUserStories(this.state.workItems)}
 
-				<h4>TODO User Stories Dump</h4>
-				<pre>{
-					JSON.stringify(this.state.workItems, null, 2)
-				}</pre>
-
 				<hr />
 
 				<h4>TODO User Story History</h4>
-				{displayUserStoryHistory(this.state.workItemsHistory, this.state.selectedTeamIteration?.path)}
-
-				<h4>TODO User Story History Dump</h4>
-				<pre>{
-					JSON.stringify(this.state.workItemsHistory, null, 2)
-				}</pre>
+				{displayUserStoryHistory(this.state.workItemsHistory, this.state.selectedTeamIteration)}
 			</Page>
 		);
 	}
