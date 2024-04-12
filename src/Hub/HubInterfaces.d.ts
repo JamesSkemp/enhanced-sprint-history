@@ -2,14 +2,20 @@ import { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
 
 export interface ITypedWorkItem {
 	id: number;
-	title: any;
+	title: string;
 	url: string;
-	iterationPath: any;
+	iterationPath: string;
 	storyPoints: number;
-	changedDate: any;
-	changedDateFull: any;
-	state: any;
+	changedDate: string;
+	changedDateFull: Date;
+	state: string;
 	revision: number;
+}
+
+export interface ITypedWorkItemWithRevision {
+	workItem: ITypedWorkItem;
+	lastRevision: ITypedWorkItem | undefined;
+	change: string;
 }
 
 export interface IHubWorkItemHistory {

@@ -123,7 +123,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			const workItemDisplay = typedWorkItems.map(workItem => {
 				return (
 					<div>
-						<a href={workItem.url}>{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
+						<a href={workItem.url} target="_blank">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
 					</div>
 				)
 			});
