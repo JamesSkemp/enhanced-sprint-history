@@ -47,15 +47,21 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			});
 		}
 
+		function getChangedWorkItems(workItems: ITypedWorkItem[]): ITypedWorkItem[] {
+			return workItems
+				.filter((wi, i, arr) => i === arr.findIndex((twi) => wi.iterationPath === twi.iterationPath && wi.state === twi.state && wi.storyPoints === twi.storyPoints && wi.id === twi.id))
+				.sort((a, b) => a.changedDateFull === b.changedDateFull ? 0 : a.changedDateFull > b.changedDateFull ? 1 : -1);
+		}
+
 		return (
 			<div>
 				<div>TODO iteration</div>
 				<pre>
 					{JSON.stringify(this.props.iteration, null, 2)}
 				</pre>
-				<div>TODO work items</div>
+				<div>TODO filtered work items</div>
 				<pre>
-					{JSON.stringify(getFlattenedRelevantRevisions(asdf), null, 2)}
+					{JSON.stringify(getChangedWorkItems(getFlattenedRelevantRevisions(asdf)), null, 2)}
 				</pre>
 			</div>
 		);
