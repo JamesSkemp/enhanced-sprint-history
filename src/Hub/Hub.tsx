@@ -124,7 +124,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				return (
 					<div>
 						<a href={workItem.url} target="_blank">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
-						<br />Current Iteration: {workItem.iterationPath}
+						<div className="current-iteration">Current Iteration: {workItem.iterationPath}</div>
+						<div className="current-state">{workItem.state}</div>
 					</div>
 				)
 			});
@@ -163,13 +164,14 @@ class HubContent extends React.Component<{}, IHubContentState> {
 					dismissOnSelect={true}
 				/>
 
-				<h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
+				<h2>Iteration History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
 				<h4>User Stories</h4>
+				<p>These stories are or have been in this iteration.</p>
 				{displayUserStories(this.state.workItems)}
 
-				<h4>User Story History</h4>
+				<h4>Iteration User Story History</h4>
 				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 			</Page>
 		);

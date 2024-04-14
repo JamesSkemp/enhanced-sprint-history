@@ -25,12 +25,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 	public render(): JSX.Element {
 		const selectedIterationPath = this.props.iteration ? this.props.iteration.path : undefined;
 
-		const asdf: IHubWorkItemIterationRevisions[] = this.props.workItemHistory.map(wiHistory => {
+		const iterationWorkItemRevisions: IHubWorkItemIterationRevisions[] = this.props.workItemHistory.map(wiHistory => {
 			const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
-
-			console.log(wiHistory);
-			console.log(`Typed Work Items for ${wiHistory.id}:`);
-			console.table(typedWorkItems);
 
 			const firstRevision = selectedIterationPath ? typedWorkItems.find(wi => wi.iterationPath === selectedIterationPath) : undefined;
 
@@ -43,10 +39,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		});
 
 		function getChangedWorkItems(workItems: ITypedWorkItem[]): ITypedWorkItem[] {
-			// TODO this isn't working as expected ... excluding revisions that it shouldn't be, needs to look at previous change to see if it should be added instead
-			// TODO fixed?
-			console.log('uh oh');
-			console.table(workItems);
 			return workItems
 				.filter((wi, i, array) => {
 					if (i === 0) {
@@ -59,9 +51,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					return false;
 				})
 				.sort((a, b) => a.changedDateFull === b.changedDateFull ? 0 : a.changedDateFull > b.changedDateFull ? 1 : -1);
-			/*return workItems
-				.filter((wi, i, arr) => i === arr.findIndex((twi) => wi.iterationPath === twi.iterationPath && isWorkItemClosed(wi) === isWorkItemClosed(twi) && wi.storyPoints === twi.storyPoints && wi.id === twi.id))
-				.sort((a, b) => a.changedDateFull === b.changedDateFull ? 0 : a.changedDateFull > b.changedDateFull ? 1 : -1);*/
 		}
 
 		function getWorkItemChange(workItem: ITypedWorkItem, currentIndex: number, allWorkItems: ITypedWorkItem[]): ITypedWorkItemWithRevision {
@@ -100,12 +89,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				returnData.change = 'Story Points Changed';
 				return returnData;
 			}
-			console.groupCollapsed(currentIndex);
-			console.log(previousWorkItemRevisions);
-			console.log(workItem);
-			console.log(currentIndex);
-			console.log(allWorkItems);
-			console.groupEnd();
 			returnData.change = 'unknown';
 			return returnData;
 		}
@@ -131,7 +114,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					</thead>
 					<tbody>
 						{
-							getChangedWorkItems(getFlattenedRelevantRevisions(asdf)).map((wi, i, a) => {
+							getChangedWorkItems(getFlattenedRelevantRevisions(iterationWorkItemRevisions)).map((wi, i, a) => {
 								const workItemChange = getWorkItemChange(wi, i, a);
 								const storyClosed = isWorkItemClosed(wi);
 								let addedStoryPoints = 0;

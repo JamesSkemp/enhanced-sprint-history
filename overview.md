@@ -1,1 +1,1 @@
-Enhanced Sprint History supports viewing a sprint iteration over time.
+Enhanced Sprint History supports viewing changes to user stories in an iteration over time.
