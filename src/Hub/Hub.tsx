@@ -124,6 +124,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				return (
 					<div>
 						<a href={workItem.url} target="_blank">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
+						<br />Current Iteration: {workItem.iterationPath}
 					</div>
 				)
 			});
@@ -163,15 +164,12 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				/>
 
 				<h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
-
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<h4>TODO User Stories</h4>
+				<h4>User Stories</h4>
 				{displayUserStories(this.state.workItems)}
 
-				<hr />
-
-				<h4>TODO User Story History</h4>
+				<h4>User Story History</h4>
 				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 			</Page>
 		);
@@ -257,7 +255,14 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			iterationId = this.teamIterations[0].id;
 			iterationName = this.teamIterations[0].name;
 		} else {
-			let currentIteration = this.teamIterations.find(i => i.attributes.timeFrame === 1);
+			let currentIteration: TeamSettingsIteration | undefined;
+			if (this.queryParamsTeamIteration) {
+				currentIteration = this.teamIterations.find(i => i.id === this.queryParamsTeamIteration);
+			}
+			if (!currentIteration) {
+				currentIteration = this.teamIterations.find(i => i.attributes.timeFrame === 1);
+			}
+
 			if (currentIteration) {
 				this.teamIterationSelection.select(this.teamIterations.indexOf(currentIteration));
 

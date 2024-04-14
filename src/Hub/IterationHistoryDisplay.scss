@@ -1,0 +1,26 @@
+th, td {
+	padding: .25em .5em;
+}
+
+th.date {
+	width: 100px;
+}
+
+td {
+	vertical-align: top;
+}
+
+.story-points {
+	text-align: center;
+
+	&.total {
+		font-weight: bold;
+
+		&.decrease {
+			color: green;
+		}
+		&.increase {
+			color: red;
+		}
+	}
+}

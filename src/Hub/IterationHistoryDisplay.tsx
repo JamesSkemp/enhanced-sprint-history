@@ -1,5 +1,6 @@
 import * as React from "react";
-import * as SDK from "azure-devops-extension-sdk";
+import "./IterationHistoryDisplay.scss";
+
 import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
@@ -9,12 +10,16 @@ export interface IterationHistoryDisplayProps {
 	workItemHistory: IHubWorkItemHistory[];
 }
 
-interface State {}
+interface State {
+	totalStoryPoints: number;
+}
 
 export class IterationHistoryDisplay extends React.Component<IterationHistoryDisplayProps, State> {
 	constructor(props: IterationHistoryDisplayProps) {
 		super(props);
-		this.state = {};
+		this.state = {
+			totalStoryPoints: 0
+		};
 	}
 
 	public render(): JSX.Element {
@@ -38,9 +43,25 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		});
 
 		function getChangedWorkItems(workItems: ITypedWorkItem[]): ITypedWorkItem[] {
+			// TODO this isn't working as expected ... excluding revisions that it shouldn't be, needs to look at previous change to see if it should be added instead
+			// TODO fixed?
+			console.log('uh oh');
+			console.table(workItems);
 			return workItems
-				.filter((wi, i, arr) => i === arr.findIndex((twi) => wi.iterationPath === twi.iterationPath && isWorkItemClosed(wi) === isWorkItemClosed(twi) && wi.storyPoints === twi.storyPoints && wi.id === twi.id))
+				.filter((wi, i, array) => {
+					if (i === 0) {
+						return true;
+					}
+					const previousItem = array[i-1];
+					if (wi.id !== previousItem.id || isWorkItemClosed(wi) !== isWorkItemClosed(previousItem) || wi.storyPoints !== previousItem.storyPoints) {
+						return true;
+					}
+					return false;
+				})
 				.sort((a, b) => a.changedDateFull === b.changedDateFull ? 0 : a.changedDateFull > b.changedDateFull ? 1 : -1);
+			/*return workItems
+				.filter((wi, i, arr) => i === arr.findIndex((twi) => wi.iterationPath === twi.iterationPath && isWorkItemClosed(wi) === isWorkItemClosed(twi) && wi.storyPoints === twi.storyPoints && wi.id === twi.id))
+				.sort((a, b) => a.changedDateFull === b.changedDateFull ? 0 : a.changedDateFull > b.changedDateFull ? 1 : -1);*/
 		}
 
 		function getWorkItemChange(workItem: ITypedWorkItem, currentIndex: number, allWorkItems: ITypedWorkItem[]): ITypedWorkItemWithRevision {
@@ -71,7 +92,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					returnData.change = 'Closed';
 					return returnData;
 				} else if (isWorkItemClosed(lastRevision)) {
-					returnData.change = 'Re-opened';
+					returnData.change = 'Reopened';
 					return returnData;
 				}
 			}
@@ -93,22 +114,19 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			return workItem.state === 'Closed';
 		}
 
+		let totalStoryPoints = 0;
+
 		return (
 			<div>
-				<div>TODO iteration</div>
-				<pre>
-					{JSON.stringify(this.props.iteration, null, 2)}
-				</pre>
-				<div>TODO filtered work items</div>
 				<table>
 					<thead>
 						<tr>
-							<th>Date</th>
+							<th className="date">Date</th>
 							<th>User Story</th>
 							<th>Change</th>
-							<th>Story Points</th>
-							<th>Story Points</th>
-							<th>Remaining</th>
+							<th className="story-points">Story Points<br />Added</th>
+							<th className="story-points">Story Points<br />Removed</th>
+							<th className="story-points">Remaining</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -118,33 +136,44 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								const storyClosed = isWorkItemClosed(wi);
 								let addedStoryPoints = 0;
 								let subtractedStoryPoints = 0;
-								if (storyClosed) {
-									subtractedStoryPoints = wi.storyPoints;
-								} else if (workItemChange.change === 'Removed') {
+								if (workItemChange.change === 'Removed') {
 									subtractedStoryPoints = wi.storyPoints;
 								} else if (workItemChange.change === 'Added') {
 									addedStoryPoints = wi.storyPoints;
 								} else if (workItemChange.change === 'Story Points Changed') {
 									addedStoryPoints = wi.storyPoints;
 									subtractedStoryPoints = workItemChange.lastRevision?.storyPoints ?? 0;
+								} else if (workItemChange.change === 'Reopened') {
+									addedStoryPoints = wi.storyPoints;
+								} else if (storyClosed) {
+									subtractedStoryPoints = wi.storyPoints;
 								}
+								let changeCharacterCode = 160;
+								if (addedStoryPoints > subtractedStoryPoints) {
+									changeCharacterCode = 8593; //8599;
+								} else if (addedStoryPoints < subtractedStoryPoints) {
+									changeCharacterCode = 8595; //8600
+								}
+
+								let updatedTotalStoryPoints = addedStoryPoints - subtractedStoryPoints;
+								totalStoryPoints += updatedTotalStoryPoints;
+
+								const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
+
 								return (
 									<tr>
 										<td>{wi.changedDateFull.toLocaleString()}</td>
-										<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a></td>
+										<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
 										<td>{workItemChange.change}</td>
-										<td>{addedStoryPoints !== 0 && workItemChange.change !== 'Story Points Changed' ? addedStoryPoints : ''}</td>
-										<td>{subtractedStoryPoints !== 0 && workItemChange.change !== 'Story Points Changed' ? subtractedStoryPoints : ''}</td>
-										<td>{JSON.stringify(workItemChange)}</td>
+										<td className="story-points increase">{addedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' ? addedStoryPoints : ''}</td>
+										<td className="story-points decrease">{subtractedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' || storyClosed || workItemChange.change === 'Removed' ? subtractedStoryPoints : ''}</td>
+										<td className={totalStoryPointsClass}>{totalStoryPoints} {String.fromCharCode(changeCharacterCode)}</td>
 									</tr>
 								);
 							})
 						}
 					</tbody>
 				</table>
-				<pre>
-					{JSON.stringify(getChangedWorkItems(getFlattenedRelevantRevisions(asdf)), null, 2)}
-				</pre>
 			</div>
 		);
 	}
