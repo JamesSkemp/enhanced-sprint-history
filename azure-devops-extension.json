@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "enhanced-sprint-history",
     "publisher": "JamesSkemp",
-    "version": "0.0.99",
+    "version": "0.0.103",
     "name": "Enhanced Sprint History",
     "description": "Azure DevOps Extension",
     "categories": [

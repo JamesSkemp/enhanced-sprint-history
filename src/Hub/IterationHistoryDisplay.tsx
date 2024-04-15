@@ -39,6 +39,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		});
 
 		function getChangedWorkItems(workItems: ITypedWorkItem[]): ITypedWorkItem[] {
+			console.table(workItems);
 			return workItems
 				.filter((wi, i, array) => {
 					if (i === 0) {
@@ -148,7 +149,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 										<td>{wi.changedDateFull.toLocaleString()}</td>
 										<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
 										<td>{workItemChange.change}</td>
-										<td className="story-points increase">{addedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' ? addedStoryPoints : ''}</td>
+										<td className="story-points increase">{addedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' || workItemChange.change === 'Added' || workItemChange.change === 'Reopened' ? addedStoryPoints : ''}</td>
 										<td className="story-points decrease">{subtractedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' || storyClosed || workItemChange.change === 'Removed' ? subtractedStoryPoints : ''}</td>
 										<td className={totalStoryPointsClass}>{totalStoryPoints} {String.fromCharCode(changeCharacterCode)}</td>
 									</tr>
