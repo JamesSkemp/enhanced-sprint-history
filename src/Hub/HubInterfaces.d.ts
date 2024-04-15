@@ -15,7 +15,7 @@ export interface ITypedWorkItem {
 export interface ITypedWorkItemWithRevision {
 	workItem: ITypedWorkItem;
 	lastRevision: ITypedWorkItem | undefined;
-	change: string;
+	change: string[];
 }
 
 export interface IHubWorkItemHistory {

@@ -62,34 +62,32 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			let returnData: ITypedWorkItemWithRevision = {
 				workItem: workItem,
 				lastRevision: undefined,
-				change: ''
+				change: []
 			};
 
 			if (previousWorkItemRevisions.length === 0) {
-				returnData.change = 'Added';
+				returnData.change.push('Added');
 				return returnData;
 			}
 			const lastRevision = previousWorkItemRevisions[0];
 			returnData.lastRevision = previousWorkItemRevisions[0];
 
 			if (lastRevision.iterationPath !== workItem.iterationPath) {
-				returnData.change = workItem.iterationPath === selectedIterationPath ? 'Added' : 'Removed';
-				return returnData;
+				returnData.change.push(workItem.iterationPath === selectedIterationPath ? 'Added' : 'Removed');
 			}
 			if (isWorkItemClosed(lastRevision) !== isWorkItemClosed(workItem)) {
 				if (isWorkItemClosed(workItem)) {
-					returnData.change = 'Closed';
-					return returnData;
+					returnData.change.push('Closed');
 				} else if (isWorkItemClosed(lastRevision)) {
-					returnData.change = 'Reopened';
-					return returnData;
+					returnData.change.push('Reopened');
 				}
 			}
 			if (lastRevision.storyPoints !== workItem.storyPoints) {
-				returnData.change = 'Story Points Changed';
-				return returnData;
+				returnData.change.push('Story Points Changed');
 			}
-			returnData.change = 'unknown';
+			if (returnData.change.length === 0) {
+				returnData.change.push('unknown');
+			}
 			return returnData;
 		}
 
@@ -117,20 +115,47 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 							getChangedWorkItems(getFlattenedRelevantRevisions(iterationWorkItemRevisions)).map((wi, i, a) => {
 								const workItemChange = getWorkItemChange(wi, i, a);
 								const storyClosed = isWorkItemClosed(wi);
+								const storyPointsChanged = workItemChange.change.indexOf('Story Points Changed') >= 0;
 								let addedStoryPoints = 0;
 								let subtractedStoryPoints = 0;
-								if (workItemChange.change === 'Removed') {
+								let showAddedPoints = false;
+								let showSubtractedPoints = false;
+								if (workItemChange.change.indexOf('Removed') >= 0) {
 									subtractedStoryPoints = wi.storyPoints;
-								} else if (workItemChange.change === 'Added') {
-									addedStoryPoints = wi.storyPoints;
-								} else if (workItemChange.change === 'Story Points Changed') {
-									addedStoryPoints = wi.storyPoints;
-									subtractedStoryPoints = workItemChange.lastRevision?.storyPoints ?? 0;
-								} else if (workItemChange.change === 'Reopened') {
-									addedStoryPoints = wi.storyPoints;
-								} else if (storyClosed) {
-									subtractedStoryPoints = wi.storyPoints;
+									showSubtractedPoints = true;
 								}
+								if (workItemChange.change.indexOf('Added') >= 0) {
+									addedStoryPoints = wi.storyPoints;
+									showAddedPoints = true;
+								}
+								if (workItemChange.change.indexOf('Reopened') >= 0) {
+									addedStoryPoints = wi.storyPoints;
+									showAddedPoints = true;
+								}
+								if (storyClosed) {
+									subtractedStoryPoints = wi.storyPoints;
+									showSubtractedPoints = true;
+								}
+								if (storyPointsChanged) {
+									if (!showAddedPoints && !showSubtractedPoints) {
+										addedStoryPoints = wi.storyPoints;
+										subtractedStoryPoints = workItemChange.lastRevision?.storyPoints ?? 0;
+										showAddedPoints = true;
+										showSubtractedPoints = true;
+									} else if (storyClosed) {
+										addedStoryPoints = wi.storyPoints;
+										subtractedStoryPoints += workItemChange.lastRevision?.storyPoints ?? 0;
+										showAddedPoints = true;
+										showSubtractedPoints = true;
+									} else {
+										// TODO potentially?
+										/*console.groupCollapsed(wi.id);
+										console.table(wi);
+										console.log(workItemChange);
+										console.groupEnd();*/
+									}
+								}
+
 								let changeCharacterCode = 160;
 								if (addedStoryPoints > subtractedStoryPoints) {
 									changeCharacterCode = 8593; //8599;
@@ -147,9 +172,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 									<tr>
 										<td>{wi.changedDateFull.toLocaleString()}</td>
 										<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
-										<td>{workItemChange.change}</td>
-										<td className="story-points increase">{addedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' || workItemChange.change === 'Added' || workItemChange.change === 'Reopened' ? addedStoryPoints : ''}</td>
-										<td className="story-points decrease">{subtractedStoryPoints !== 0 || workItemChange.change === 'Story Points Changed' || storyClosed || workItemChange.change === 'Removed' ? subtractedStoryPoints : ''}</td>
+										<td>{workItemChange.change.join(', ')}</td>
+										<td className="story-points increase">{addedStoryPoints !== 0 || showAddedPoints ? '+' + addedStoryPoints : ''}</td>
+										<td className="story-points decrease">{subtractedStoryPoints !== 0 || showSubtractedPoints ? '-' + subtractedStoryPoints : ''}</td>
 										<td className={totalStoryPointsClass}>{totalStoryPoints} {String.fromCharCode(changeCharacterCode)}</td>
 									</tr>
 								);
