@@ -39,14 +39,13 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		});
 
 		function getChangedWorkItems(workItems: ITypedWorkItem[]): ITypedWorkItem[] {
-			console.table(workItems);
 			return workItems
 				.filter((wi, i, array) => {
 					if (i === 0) {
 						return true;
 					}
 					const previousItem = array[i-1];
-					if (wi.id !== previousItem.id || isWorkItemClosed(wi) !== isWorkItemClosed(previousItem) || wi.storyPoints !== previousItem.storyPoints) {
+					if (wi.id !== previousItem.id || isWorkItemClosed(wi) !== isWorkItemClosed(previousItem) || (wi.storyPoints !== previousItem.storyPoints && !isWorkItemClosed(wi)) || wi.iterationPath !== previousItem.iterationPath) {
 						return true;
 					}
 					return false;
