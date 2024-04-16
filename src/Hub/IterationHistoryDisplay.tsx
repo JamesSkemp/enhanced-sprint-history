@@ -45,7 +45,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						return true;
 					}
 					const previousItem = array[i-1];
-					if (wi.id !== previousItem.id || isWorkItemClosed(wi) !== isWorkItemClosed(previousItem) || (wi.storyPoints !== previousItem.storyPoints && !isWorkItemClosed(wi)) || wi.iterationPath !== previousItem.iterationPath) {
+					if (wi.id !== previousItem.id || isWorkItemClosed(wi) !== isWorkItemClosed(previousItem) || (wi.storyPoints !== previousItem.storyPoints && !isWorkItemClosed(wi)) || ((wi.state === 'Removed' || previousItem.state === 'Removed') && (wi.state !== 'Removed' || previousItem.state !== 'Removed')) || wi.iterationPath !== previousItem.iterationPath) {
 						return true;
 					}
 					return false;
@@ -74,6 +74,12 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 			if (lastRevision.iterationPath !== workItem.iterationPath) {
 				returnData.change.push(workItem.iterationPath === selectedIterationPath ? 'Added' : 'Removed');
+			} else {
+				if (lastRevision.state === 'Removed' && workItem.state !== 'Removed') {
+					returnData.change.push('Reopened');
+				} else if (lastRevision.state !== 'Removed' && workItem.state === 'Removed') {
+					returnData.change.push('Removed');
+				}
 			}
 			if (isWorkItemClosed(lastRevision) !== isWorkItemClosed(workItem)) {
 				if (isWorkItemClosed(workItem)) {
