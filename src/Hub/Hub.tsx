@@ -110,7 +110,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		function sprintDatesHeading(selectedTeamIteration: TeamSettingsIteration | undefined) {
 			if (selectedTeamIteration) {
 				return (
-					<h3>{selectedTeamIteration.attributes.startDate.toLocaleDateString()} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString()}</h3>
+					<h3>{selectedTeamIteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</h3>
 				);
 			} else {
 				return null;
@@ -167,12 +167,12 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<h2>Iteration History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
+				<h4>Iteration User Story History</h4>
+				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
+
 				<h4>User Stories</h4>
 				<p>These stories are or have been in this iteration.</p>
 				{displayUserStories(this.state.workItems)}
-
-				<h4>Iteration User Story History</h4>
-				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 			</Page>
 		);
 	}
@@ -382,7 +382,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 	private updateQueryParams = async () => {
 		const navService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 		navService.setQueryParams({ selectedTeam: "" + this.state.selectedTeam, selectedTeamIterationId: this.state.selectedTeamIterationId });
-		navService.setDocumentTitle("" + this.state.selectedTeamName + " : " + this.state.selectedTeamIterationName + " - Iteration Work Items");
+		navService.setDocumentTitle("" + this.state.selectedTeamName + " : " + this.state.selectedTeamIterationName + " - Enhanced Sprint History");
 	}
 }
 
