@@ -18,6 +18,7 @@ import { ListSelection } from "azure-devops-ui/List";
 import { IHubWorkItemHistory } from "./HubInterfaces";
 import { getTypedWorkItem } from "./HubUtils";
 import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
+import { UserStoryListing } from "./UserStoryListing";
 
 interface IHubContentState {
 	project: string;
@@ -172,6 +173,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 				<h4>User Stories</h4>
 				<p>These stories are or have been in this iteration.</p>
+				<UserStoryListing workItems={this.state.workItems}></UserStoryListing>
 				{displayUserStories(this.state.workItems)}
 			</Page>
 		);
