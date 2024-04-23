@@ -1,3 +1,10 @@
 .user-story-listing, .bolt-card.user-story-listing {
+	margin-bottom: 1em;
 	overflow: visible;
+}
+
+.user-stories {
+	&>div {
+		margin-bottom: .75em;
+	}
 }

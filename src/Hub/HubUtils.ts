@@ -1,5 +1,5 @@
 import { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
-import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
+import { IHubWorkItemIterationRevisions, ITypedWorkItem } from "./HubInterfaces";
 
 export function getTypedWorkItem(workItem: WorkItem): ITypedWorkItem {
 	return {

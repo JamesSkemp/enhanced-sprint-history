@@ -16,7 +16,6 @@ import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
 import { IHubWorkItemHistory } from "./HubInterfaces";
-import { getTypedWorkItem } from "./HubUtils";
 import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
 import { UserStoryListing } from "./UserStoryListing";
 
@@ -108,10 +107,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			}
 		}
 
-		function sprintDatesHeading(selectedTeamIteration: TeamSettingsIteration | undefined) {
+		function sprintDatesHeading(selectedTeamIteration: TeamSettingsIteration | undefined): JSX.Element | null {
 			if (selectedTeamIteration) {
 				return (
-					<h3>{selectedTeamIteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</h3>
+					<p className="iteration-dates">{selectedTeamIteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</p>
 				);
 			} else {
 				return null;
@@ -145,15 +144,12 @@ class HubContent extends React.Component<{}, IHubContentState> {
 					dismissOnSelect={true}
 				/>
 
-				<h2>Iteration History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>
+				{this.state.selectedTeamIterationName && <h2>Iteration History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<h4>Iteration User Story History</h4>
 				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 
-				<h4>User Stories</h4>
-				<p>These stories are or have been in this iteration.</p>
-				<UserStoryListing workItems={this.state.workItems}></UserStoryListing>
+				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems}></UserStoryListing>
 			</Page>
 		);
 	}
@@ -313,7 +309,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 	private async getTeamIterationData() {
 		await SDK.ready();
-		const teamContext = { projectId: this.state.project, teamId: this.state.selectedTeam, project: "", team: "" };
 
 		const selectedIteration = this.state.teamIterations.find(i => i.id === this.state.selectedTeamIterationId);
 		if (!selectedIteration) {

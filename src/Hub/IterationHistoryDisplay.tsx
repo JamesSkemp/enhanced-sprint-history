@@ -4,6 +4,7 @@ import "./IterationHistoryDisplay.scss";
 import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
+import { Card } from "azure-devops-ui/Card";
 
 export interface IterationHistoryDisplayProps {
 	iteration: TeamSettingsIteration | undefined;
@@ -22,8 +23,12 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		};
 	}
 
-	public render(): JSX.Element {
+	public render(): JSX.Element | null {
 		const selectedIterationPath = this.props.iteration ? this.props.iteration.path : undefined;
+
+		if (!this.props.workItemHistory?.length) {
+			return null;
+		}
 
 		const iterationWorkItemRevisions: IHubWorkItemIterationRevisions[] = this.props.workItemHistory.map(wiHistory => {
 			const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
@@ -104,7 +109,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		let totalStoryPoints = 0;
 
 		return (
-			<div>
+			<Card className="iteration-history-display"
+				titleProps={{ text: "Iteration User Story History", ariaLevel: 3 }}>
 				<table>
 					<thead>
 						<tr>
@@ -188,7 +194,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						}
 					</tbody>
 				</table>
-			</div>
+			</Card>
 		);
 	}
 }
