@@ -118,26 +118,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			}
 		}
 
-		function displayUserStories(workItems: WorkItem[]) {
-			const typedWorkItems = workItems.map(workItem => getTypedWorkItem(workItem));
-
-			const workItemDisplay = typedWorkItems.map(workItem => {
-				return (
-					<div>
-						<a href={workItem.url} target="_blank">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
-						<div className="current-iteration">Current Iteration: {workItem.iterationPath}</div>
-						<div className="current-state">{workItem.state}</div>
-					</div>
-				)
-			});
-
-			return (
-				<React.Fragment>
-					{workItemDisplay}
-				</React.Fragment>
-			);
-		}
-
 		return (
 			<Page className="enhanced-sprint-history flex-grow">
 				<Header title="Enhanced Sprint History"
@@ -174,7 +154,6 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<h4>User Stories</h4>
 				<p>These stories are or have been in this iteration.</p>
 				<UserStoryListing workItems={this.state.workItems}></UserStoryListing>
-				{displayUserStories(this.state.workItems)}
 			</Page>
 		);
 	}
