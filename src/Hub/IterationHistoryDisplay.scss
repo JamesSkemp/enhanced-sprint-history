@@ -33,3 +33,9 @@ td {
 	margin-bottom: 1em;
 	overflow: visible;
 }
+
+.iteration-history-display {
+	.bolt-card-content {
+		display: grid;
+	}
+}

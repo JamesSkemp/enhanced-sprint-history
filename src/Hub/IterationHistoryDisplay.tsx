@@ -5,6 +5,10 @@ import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 import { Card } from "azure-devops-ui/Card";
+import { CategoryScale, Chart as ChartJs, LineElement, LinearScale, PointElement, Tooltip } from "chart.js";
+import { Line } from "react-chartjs-2";
+
+ChartJs.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 export interface IterationHistoryDisplayProps {
 	iteration: TeamSettingsIteration | undefined;
@@ -108,10 +112,103 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 		let totalStoryPoints = 0;
 
+		let changedWorkItems = getChangedWorkItems(getFlattenedRelevantRevisions(iterationWorkItemRevisions));
+
+		const storyPointChanges = changedWorkItems.map((wi, i, a) => {
+			const workItemChange = getWorkItemChange(wi, i, a);
+			const storyClosed = isWorkItemClosed(wi);
+			const storyPointsChanged = workItemChange.change.indexOf('Story Points Changed') >= 0;
+			let addedStoryPoints = 0;
+			let subtractedStoryPoints = 0;
+			let showAddedPoints = false;
+			let showSubtractedPoints = false;
+			if (workItemChange.change.indexOf('Removed') >= 0) {
+				subtractedStoryPoints = wi.storyPoints;
+				showSubtractedPoints = true;
+			}
+			if (workItemChange.change.indexOf('Added') >= 0) {
+				addedStoryPoints = wi.storyPoints;
+				showAddedPoints = true;
+			}
+			if (workItemChange.change.indexOf('Reopened') >= 0) {
+				addedStoryPoints = wi.storyPoints;
+				showAddedPoints = true;
+			}
+			if (storyClosed) {
+				subtractedStoryPoints = wi.storyPoints;
+				showSubtractedPoints = true;
+			}
+			if (storyPointsChanged) {
+				if (!showAddedPoints && !showSubtractedPoints) {
+					addedStoryPoints = wi.storyPoints;
+					subtractedStoryPoints = workItemChange.lastRevision?.storyPoints ?? 0;
+					showAddedPoints = true;
+					showSubtractedPoints = true;
+				} else if (storyClosed) {
+					addedStoryPoints = wi.storyPoints;
+					subtractedStoryPoints += workItemChange.lastRevision?.storyPoints ?? 0;
+					showAddedPoints = true;
+					showSubtractedPoints = true;
+				} else {
+					// TODO potentially?
+					/*console.groupCollapsed(wi.id);
+					console.table(wi);
+					console.log(workItemChange);
+					console.groupEnd();*/
+				}
+			}
+
+			let changeCharacterCode = 160;
+			if (addedStoryPoints > subtractedStoryPoints) {
+				changeCharacterCode = 8593; //8599;
+			} else if (addedStoryPoints < subtractedStoryPoints) {
+				changeCharacterCode = 8595; //8600
+			}
+
+			let updatedTotalStoryPoints = addedStoryPoints - subtractedStoryPoints;
+			totalStoryPoints += updatedTotalStoryPoints;
+
+			const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
+
+			return {
+				changedDateFull: wi.changedDateFull,
+				url: wi.url,
+				title: wi.title,
+				id: wi.id,
+				workItemChange: workItemChange,
+				addedStoryPoints: addedStoryPoints,
+				showAddedPoints: showAddedPoints,
+				subtractedStoryPoints: subtractedStoryPoints,
+				showSubtractedPoints: showSubtractedPoints,
+				totalStoryPointsClass: totalStoryPointsClass,
+				totalStoryPoints: totalStoryPoints,
+				changeCharacterCode: changeCharacterCode
+			};
+		})
+
+		const chartOptions = {
+			responsive: true
+		};
+
+		const chartData = {
+			labels: storyPointChanges.map(cwi => cwi.changedDateFull.toLocaleString()),
+			datasets: [
+				{
+					label: 'Story Points',
+					data: storyPointChanges.map(cwi => cwi.totalStoryPoints),
+					borderColor: 'rgb(53, 162, 235)',
+					//backgroundColor: 'rgba(53, 162, 235, 0.5)'
+				}
+			]
+		};
+
 		return (
 			<Card className="iteration-history-display"
 				titleProps={{ text: "Iteration User Story History", ariaLevel: 3 }}>
-				<table>
+				<div className="display-child">
+					<Line options={chartOptions} data={chartData} />
+				</div>
+				<table className="display-child">
 					<thead>
 						<tr>
 							<th className="date">Date</th>
@@ -123,74 +220,18 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						</tr>
 					</thead>
 					<tbody>
-						{
-							getChangedWorkItems(getFlattenedRelevantRevisions(iterationWorkItemRevisions)).map((wi, i, a) => {
-								const workItemChange = getWorkItemChange(wi, i, a);
-								const storyClosed = isWorkItemClosed(wi);
-								const storyPointsChanged = workItemChange.change.indexOf('Story Points Changed') >= 0;
-								let addedStoryPoints = 0;
-								let subtractedStoryPoints = 0;
-								let showAddedPoints = false;
-								let showSubtractedPoints = false;
-								if (workItemChange.change.indexOf('Removed') >= 0) {
-									subtractedStoryPoints = wi.storyPoints;
-									showSubtractedPoints = true;
-								}
-								if (workItemChange.change.indexOf('Added') >= 0) {
-									addedStoryPoints = wi.storyPoints;
-									showAddedPoints = true;
-								}
-								if (workItemChange.change.indexOf('Reopened') >= 0) {
-									addedStoryPoints = wi.storyPoints;
-									showAddedPoints = true;
-								}
-								if (storyClosed) {
-									subtractedStoryPoints = wi.storyPoints;
-									showSubtractedPoints = true;
-								}
-								if (storyPointsChanged) {
-									if (!showAddedPoints && !showSubtractedPoints) {
-										addedStoryPoints = wi.storyPoints;
-										subtractedStoryPoints = workItemChange.lastRevision?.storyPoints ?? 0;
-										showAddedPoints = true;
-										showSubtractedPoints = true;
-									} else if (storyClosed) {
-										addedStoryPoints = wi.storyPoints;
-										subtractedStoryPoints += workItemChange.lastRevision?.storyPoints ?? 0;
-										showAddedPoints = true;
-										showSubtractedPoints = true;
-									} else {
-										// TODO potentially?
-										/*console.groupCollapsed(wi.id);
-										console.table(wi);
-										console.log(workItemChange);
-										console.groupEnd();*/
-									}
-								}
-
-								let changeCharacterCode = 160;
-								if (addedStoryPoints > subtractedStoryPoints) {
-									changeCharacterCode = 8593; //8599;
-								} else if (addedStoryPoints < subtractedStoryPoints) {
-									changeCharacterCode = 8595; //8600
-								}
-
-								let updatedTotalStoryPoints = addedStoryPoints - subtractedStoryPoints;
-								totalStoryPoints += updatedTotalStoryPoints;
-
-								const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
-
-								return (
-									<tr>
-										<td>{wi.changedDateFull.toLocaleString()}</td>
-										<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
-										<td>{workItemChange.change.join(', ')}</td>
-										<td className="story-points increase">{addedStoryPoints !== 0 || showAddedPoints ? '+' + addedStoryPoints : ''}</td>
-										<td className="story-points decrease">{subtractedStoryPoints !== 0 || showSubtractedPoints ? '-' + subtractedStoryPoints : ''}</td>
-										<td className={totalStoryPointsClass}>{totalStoryPoints} {String.fromCharCode(changeCharacterCode)}</td>
-									</tr>
-								);
-							})
+						{storyPointChanges.map((wi, i, a) => {
+							return (
+								<tr>
+									<td>{wi.changedDateFull.toLocaleString()}</td>
+									<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
+									<td>{wi.workItemChange.change.join(', ')}</td>
+									<td className="story-points increase">{wi.addedStoryPoints !== 0 || wi.showAddedPoints ? '+' + wi.addedStoryPoints : ''}</td>
+									<td className="story-points decrease">{wi.subtractedStoryPoints !== 0 || wi.showSubtractedPoints ? '-' + wi.subtractedStoryPoints : ''}</td>
+									<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
+								</tr>
+							);
+						})
 						}
 					</tbody>
 				</table>
