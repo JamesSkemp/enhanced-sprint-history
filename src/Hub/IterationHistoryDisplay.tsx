@@ -184,7 +184,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				totalStoryPoints: totalStoryPoints,
 				changeCharacterCode: changeCharacterCode
 			};
-		})
+		});
 
 		const chartOptions = {
 			responsive: true
