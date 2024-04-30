@@ -122,7 +122,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			let subtractedStoryPoints = 0;
 			let showAddedPoints = false;
 			let showSubtractedPoints = false;
-			if (workItemChange.change.indexOf('Removed') >= 0) {
+			if (storyClosed) {
 				subtractedStoryPoints = wi.storyPoints;
 				showSubtractedPoints = true;
 			}
@@ -134,9 +134,13 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				addedStoryPoints = wi.storyPoints;
 				showAddedPoints = true;
 			}
-			if (storyClosed) {
+			if (workItemChange.change.indexOf('Removed') >= 0) {
 				subtractedStoryPoints = wi.storyPoints;
 				showSubtractedPoints = true;
+				if (storyClosed && workItemChange.lastRevision && isWorkItemClosed(workItemChange.lastRevision)) {
+					// If the story was already closed, no need to remove points.
+					subtractedStoryPoints = 0;
+				}
 			}
 			if (storyPointsChanged) {
 				if (!showAddedPoints && !showSubtractedPoints) {
@@ -182,7 +186,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				showSubtractedPoints: showSubtractedPoints,
 				totalStoryPointsClass: totalStoryPointsClass,
 				totalStoryPoints: totalStoryPoints,
-				changeCharacterCode: changeCharacterCode
+				changeCharacterCode: changeCharacterCode,
+				state: wi.state
 			};
 		});
 
@@ -197,7 +202,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					label: 'Story Points',
 					data: storyPointChanges.map(cwi => cwi.totalStoryPoints),
 					borderColor: 'rgb(53, 162, 235)',
-					//backgroundColor: 'rgba(53, 162, 235, 0.5)'
+					backgroundColor: 'rgba(53, 162, 235, 0.5)'
 				}
 			]
 		};
@@ -224,7 +229,11 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 							return (
 								<tr>
 									<td>{wi.changedDateFull.toLocaleString()}</td>
-									<td><a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />{wi.title}</td>
+									<td>
+										<a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />
+										{wi.title}
+										<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>
+									</td>
 									<td>{wi.workItemChange.change.join(', ')}</td>
 									<td className="story-points increase">{wi.addedStoryPoints !== 0 || wi.showAddedPoints ? '+' + wi.addedStoryPoints : ''}</td>
 									<td className="story-points decrease">{wi.subtractedStoryPoints !== 0 || wi.showSubtractedPoints ? '-' + wi.subtractedStoryPoints : ''}</td>
