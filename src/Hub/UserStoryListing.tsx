@@ -32,12 +32,27 @@ export class UserStoryListing extends React.Component<UserStoryListingProps> {
 			return null;
 		}
 
-		const workItemDisplay = this.typedWorkItems.map(workItem => {
+		const workItemDisplay = this.typedWorkItems.sort((a, b) => {
+			if (a.iterationPath < b.iterationPath) {
+				return -1;
+			} else if (a.iterationPath > b.iterationPath) {
+				return 1;
+			}
+			if (a.state < b.state) {
+				return -1;
+			} else if (a.state > b.state) {
+				return 1;
+			}
+			return a.title.localeCompare(b.title);
+		}).map(workItem => {
 			return (
 				<div>
 					<a href={workItem.url} target="_blank">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
 					<div className="current-iteration secondary-text font-size-ms">Current Iteration: {workItem.iterationPath}</div>
-					<div className="current-state secondary-text font-size-ms">{workItem.state}</div>
+					<div className="current-state secondary-text font-size-ms">
+					<div className={`state-circle item-state-${workItem.state.toLowerCase()}`}></div>
+						{workItem.state}
+					</div>
 				</div>
 			)
 		});
