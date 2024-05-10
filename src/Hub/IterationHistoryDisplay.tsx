@@ -5,7 +5,7 @@ import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 import { Card } from "azure-devops-ui/Card";
-import { CategoryScale, ChartData, Chart as ChartJs, LineElement, LinearScale, Point, PointElement, Tooltip } from "chart.js";
+import { CategoryScale, ChartData, ChartOptions, Chart as ChartJs, LineElement, LineOptions, LinearScale, Point, PointElement, Tooltip } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Tab, TabBar } from "azure-devops-ui/Tabs";
 
@@ -23,7 +23,12 @@ interface State {
 
 export class IterationHistoryDisplay extends React.Component<IterationHistoryDisplayProps, State> {
 	chartOptions = {
-		responsive: true
+		responsive: true,
+		scales: {
+			y: {
+				suggestedMin: 0
+			}
+		}
 	};
 	completeChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
 	dailyChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
@@ -32,7 +37,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		super(props);
 		this.state = {
 			totalStoryPoints: 0,
-			selectedTabId: 'complete'
+			selectedTabId: 'daily'
 		};
 	}
 
@@ -204,7 +209,12 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		console.log(JSON.stringify(storyPointChanges));
 
 		this.completeChartData = {
-			labels: storyPointChanges.map(cwi => cwi.changedDateFull.toLocaleString()),
+			labels: storyPointChanges.map((cwi, index, changes) => {
+				if (index === 0 || cwi.changedDateFull.toLocaleDateString() !== changes[index - 1].changedDateFull.toLocaleDateString()) {
+					return cwi.changedDateFull.toLocaleString();
+				}
+				return cwi.changedDateFull.toLocaleTimeString();
+			}),
 			datasets: [
 				{
 					label: 'Story Points',
@@ -237,12 +247,12 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return (
 			<Card className="iteration-history-display"
 				titleProps={{ text: "Sprint User Story History", ariaLevel: 3 }}>
-				<div className="display-child">
+				<div className="display-child tab-charts">
 					<TabBar
 						onSelectedTabChanged={this.onSelectedTabChanged}
 						selectedTabId={selectedTabId}>
-						<Tab name="Complete History" id="complete" />
 						<Tab name="Daily During Sprint" id="daily" />
+						<Tab name="Complete History" id="complete" />
 					</TabBar>
 
 					{ this.getTabContent() }
@@ -290,10 +300,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 	private getTabContent() {
 		const { selectedTabId } = this.state;
-		if (selectedTabId === "daily") {
-			return <Line options={this.chartOptions} data={this.dailyChartData} />;
-		} else {
+		if (selectedTabId === 'complete') {
 			return <Line options={this.chartOptions} data={this.completeChartData} />;
+		} else {
+			return <Line options={this.chartOptions} data={this.dailyChartData} />;
 		}
 	}
 

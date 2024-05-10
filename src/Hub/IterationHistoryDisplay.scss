@@ -40,8 +40,9 @@ td {
 	}
 }
 
-.display-child {
+.display-child.tab-charts {
 	&>canvas {
 		margin-top: 1em;
+		max-height: 70vh;
 	}
 }
