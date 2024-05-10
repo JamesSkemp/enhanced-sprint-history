@@ -39,3 +39,9 @@ td {
 		display: grid;
 	}
 }
+
+.display-child {
+	&>canvas {
+		margin-top: 1em;
+	}
+}

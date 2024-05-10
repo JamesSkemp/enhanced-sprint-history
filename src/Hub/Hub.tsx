@@ -144,7 +144,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 					dismissOnSelect={true}
 				/>
 
-				{this.state.selectedTeamIterationName && <h2>Iteration History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
+				{this.state.selectedTeamIterationName && <h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
 				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />

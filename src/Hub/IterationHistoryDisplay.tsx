@@ -5,8 +5,9 @@ import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 import { Card } from "azure-devops-ui/Card";
-import { CategoryScale, Chart as ChartJs, LineElement, LinearScale, PointElement, Tooltip } from "chart.js";
+import { CategoryScale, ChartData, Chart as ChartJs, LineElement, LinearScale, Point, PointElement, Tooltip } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { Tab, TabBar } from "azure-devops-ui/Tabs";
 
 ChartJs.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
@@ -17,18 +18,27 @@ export interface IterationHistoryDisplayProps {
 
 interface State {
 	totalStoryPoints: number;
+	selectedTabId: string;
 }
 
 export class IterationHistoryDisplay extends React.Component<IterationHistoryDisplayProps, State> {
+	chartOptions = {
+		responsive: true
+	};
+	completeChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
+	dailyChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
+
 	constructor(props: IterationHistoryDisplayProps) {
 		super(props);
 		this.state = {
-			totalStoryPoints: 0
+			totalStoryPoints: 0,
+			selectedTabId: 'complete'
 		};
 	}
 
 	public render(): JSX.Element | null {
 		const selectedIterationPath = this.props.iteration ? this.props.iteration.path : undefined;
+		const { selectedTabId } = this.state;
 
 		if (!this.props.workItemHistory?.length) {
 			return null;
@@ -191,11 +201,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			};
 		});
 
-		const chartOptions = {
-			responsive: true
-		};
+		console.log(JSON.stringify(storyPointChanges));
 
-		const chartData = {
+		this.completeChartData = {
 			labels: storyPointChanges.map(cwi => cwi.changedDateFull.toLocaleString()),
 			datasets: [
 				{
@@ -207,11 +215,38 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		const iterationDates = this.props.iteration ? this.getDateRange(
+			this.props.iteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' }),
+			this.props.iteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })
+		) : [];
+		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
+		//const iterationDatesData = Array.from(Array(iterationDates.length).keys());
+		const iterationDatesData = this.getIterationDatesLastStoryPoints(iterationDates, changedStoriesByDate);
+
+		this.dailyChartData = {
+			labels: iterationDates,
+			datasets: [
+				{
+					label: 'Story Points',
+					data: iterationDatesData,
+					borderColor: 'rgb(53, 162, 235)',
+					backgroundColor: 'rgba(53, 162, 235, 0.5)'
+				}
+			]
+		};
+
 		return (
 			<Card className="iteration-history-display"
-				titleProps={{ text: "Iteration User Story History", ariaLevel: 3 }}>
+				titleProps={{ text: "Sprint User Story History", ariaLevel: 3 }}>
 				<div className="display-child">
-					<Line options={chartOptions} data={chartData} />
+					<TabBar
+						onSelectedTabChanged={this.onSelectedTabChanged}
+						selectedTabId={selectedTabId}>
+						<Tab name="Complete History" id="complete" />
+						<Tab name="Daily During Sprint" id="daily" />
+					</TabBar>
+
+					{ this.getTabContent() }
 				</div>
 				<table className="display-child">
 					<thead>
@@ -246,5 +281,69 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				</table>
 			</Card>
 		);
+	}
+
+	private onSelectedTabChanged = (newTabId: string) => {
+		this.setState({
+			selectedTabId: newTabId
+		});
+	}
+
+	private getTabContent() {
+		const { selectedTabId } = this.state;
+		if (selectedTabId === "daily") {
+			return <Line options={this.chartOptions} data={this.dailyChartData} />;
+		} else {
+			return <Line options={this.chartOptions} data={this.completeChartData} />;
+		}
+	}
+
+	private getDateRange(startDate: string, endDate: string, steps = 1): string[] {
+		const dateArray = [];
+		let currentDate = new Date(startDate);
+
+		while (currentDate <= new Date(endDate)) {
+			dateArray.push(new Date(currentDate).toLocaleDateString());
+			currentDate.setUTCDate(currentDate.getUTCDate() + steps);
+		}
+
+		return dateArray;
+	}
+
+	private groupStoryPointChanges(list: any[]): Map<string, any[]> {
+		const map = new Map();
+		list.forEach((item) => {
+			const key = item.changedDateFull.toLocaleDateString();
+			const collection = map.get(key);
+			if (!collection) {
+				map.set(key, [item]);
+			} else {
+				collection.push(item);
+			}
+		});
+		return map;
+	}
+
+	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, any[]>): number[] {
+		let storyPoints: number[] = [];
+		iterationDates.forEach((date, index) => {
+			let lastStoryPoints = iterationStoryPoints.get(date);
+			if (lastStoryPoints) {
+				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
+			} else if (index === 0) {
+				storyPoints.push(0);
+			} else {
+				storyPoints.push(storyPoints[index - 1]);
+			}
+		});
+
+		return storyPoints;
+
+		/*iterationStoryPoints.forEach((value: any[], key: string) => {
+			return {
+				date: key,
+				storyPoints: value[value.length - 1]
+			};
+		});*/
 	}
 }
