@@ -220,7 +220,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			this.props.iteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })
 		) : [];
 		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
-		//const iterationDatesData = Array.from(Array(iterationDates.length).keys());
 		const iterationDatesData = this.getIterationDatesLastStoryPoints(iterationDates, changedStoriesByDate);
 
 		this.dailyChartData = {
@@ -324,26 +323,22 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return map;
 	}
 
-	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, any[]>): number[] {
-		let storyPoints: number[] = [];
+	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, any[]>): (number | null)[] {
+		const currentDate = new Date().toLocaleDateString();
+		let storyPoints: (number | null)[] = [];
 		iterationDates.forEach((date, index) => {
 			let lastStoryPoints = iterationStoryPoints.get(date);
 			if (lastStoryPoints) {
 				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
 			} else if (index === 0) {
 				storyPoints.push(0);
-			} else {
+			} else if (new Date(currentDate) >= new Date(date)) {
 				storyPoints.push(storyPoints[index - 1]);
+			} else {
+				storyPoints.push(null);
 			}
 		});
 
 		return storyPoints;
-
-		/*iterationStoryPoints.forEach((value: any[], key: string) => {
-			return {
-				date: key,
-				storyPoints: value[value.length - 1]
-			};
-		});*/
 	}
 }
