@@ -334,6 +334,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 	}
 
 	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, any[]>): (number | null)[] {
+		if (iterationDates.length === 0 || iterationStoryPoints.size === 0) {
+			return [];
+		}
+
 		const currentDate = new Date().toLocaleDateString();
 		let storyPoints: (number | null)[] = [];
 		iterationDates.forEach((date, index) => {
@@ -341,7 +345,20 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			if (lastStoryPoints) {
 				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
 			} else if (index === 0) {
-				storyPoints.push(0);
+				// Isn't a match, so check if there's a previous date to carryover points from.
+				const length = iterationStoryPoints.size;
+				const iterator = iterationStoryPoints.keys();
+				let itemKey: string = iterator.next().value;
+				let points = 0;
+				for (let i = 0; i < length; i++) {
+					if (new Date(iterationDates[0]) <= new Date(itemKey)) {
+						break;
+					}
+					let dateStoryPoints = iterationStoryPoints.get(itemKey)!;
+					points = dateStoryPoints[dateStoryPoints.length - 1].totalStoryPoints;
+					itemKey = iterator.next().value;
+				}
+				storyPoints.push(points);
 			} else if (new Date(currentDate) >= new Date(date)) {
 				storyPoints.push(storyPoints[index - 1]);
 			} else {
