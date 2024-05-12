@@ -108,9 +108,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		}
 
 		function sprintDatesHeading(selectedTeamIteration: TeamSettingsIteration | undefined): JSX.Element | null {
-			if (selectedTeamIteration) {
+			if (selectedTeamIteration && (selectedTeamIteration.attributes.startDate || selectedTeamIteration.attributes.finishDate)) {
 				return (
-					<p className="iteration-dates">{selectedTeamIteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })} - {selectedTeamIteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</p>
+					<p className="iteration-dates">{selectedTeamIteration.attributes.startDate ? selectedTeamIteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' }) : ''} - {selectedTeamIteration.attributes.finishDate ? selectedTeamIteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' }) : ''}</p>
 				);
 			} else {
 				return null;
@@ -331,6 +331,10 @@ class HubContent extends React.Component<{}, IHubContentState> {
 	}
 
 	private async getWorkItemData(workItems: WorkItemReference[]) {
+		if (!workItems.length) {
+			this.showToast('No work items found for this iteration.');
+			return;
+		}
 		const witClient = getClient(WorkItemTrackingRestClient);
 		// TODO handle more than 200 work items; this endpoint only accepts/returns up to 200
 		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
