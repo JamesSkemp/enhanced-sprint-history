@@ -32,6 +32,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 	};
 	completeChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
 	dailyChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
+	dailyCompleteChartData: ChartData<"line", (number | Point | null)[], unknown> = { datasets: [] };
 
 	constructor(props: IterationHistoryDisplayProps) {
 		super(props);
@@ -225,11 +226,30 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
+		const changedStoriesDates = [...changedStoriesByDate.keys()];
+		const completeHistoryDates: string[] = changedStoriesDates.length > 0 ? this.getDateRange(
+			changedStoriesDates[0],
+			changedStoriesDates[changedStoriesDates.length - 1]
+		) : [];
+		const completeHistoryDatesData = this.getIterationDatesLastStoryPoints(completeHistoryDates, changedStoriesByDate);
+
+		this.dailyCompleteChartData = {
+			labels: completeHistoryDates,
+			datasets: [
+				{
+					label: 'Story Points',
+					data: completeHistoryDatesData,
+					borderColor: 'rgb(53, 162, 235)',
+					backgroundColor: 'rgba(53, 162, 235, 0.5)'
+				}
+			]
+		};
+
 		const iterationDates = this.props.iteration ? this.getDateRange(
 			this.props.iteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' }),
 			this.props.iteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })
 		) : [];
-		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
 		const iterationDatesData = this.getIterationDatesLastStoryPoints(iterationDates, changedStoriesByDate);
 
 		this.dailyChartData = {
@@ -252,6 +272,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						onSelectedTabChanged={this.onSelectedTabChanged}
 						selectedTabId={selectedTabId}>
 						<Tab name="Daily During Sprint" id="daily" />
+						<Tab name="Daily Complete History" id="daily-complete" />
 						<Tab name="Complete History" id="complete" />
 					</TabBar>
 
@@ -302,6 +323,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		const { selectedTabId } = this.state;
 		if (selectedTabId === 'complete') {
 			return <Line options={this.chartOptions} data={this.completeChartData} />;
+		} else if (selectedTabId === 'daily-complete') {
+			return <Line options={this.chartOptions} data={this.dailyCompleteChartData} />
 		} else {
 			return <Line options={this.chartOptions} data={this.dailyChartData} />;
 		}
