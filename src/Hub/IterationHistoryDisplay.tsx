@@ -169,12 +169,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					subtractedStoryPoints += workItemChange.lastRevision?.storyPoints ?? 0;
 					showAddedPoints = true;
 					showSubtractedPoints = true;
-				} else {
-					// TODO potentially?
-					/*console.groupCollapsed(wi.id);
-					console.table(wi);
-					console.log(workItemChange);
-					console.groupEnd();*/
 				}
 			}
 
@@ -206,8 +200,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				state: wi.state
 			};
 		});
-
-		console.log(JSON.stringify(storyPointChanges));
 
 		this.completeChartData = {
 			labels: storyPointChanges.map((cwi, index, changes) => {
