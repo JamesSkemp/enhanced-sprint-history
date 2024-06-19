@@ -3,7 +3,7 @@ import "./Hub.scss";
 
 import * as React from "react";
 import * as SDK from "azure-devops-extension-sdk";
-import { CommonServiceIds, IGlobalMessagesService, IHostNavigationService, IProjectInfo, IProjectPageService, getClient } from "azure-devops-extension-api";
+import { CommonServiceIds, IExtensionDataService, IGlobalMessagesService, IHostNavigationService, IProjectInfo, IProjectPageService, getClient } from "azure-devops-extension-api";
 
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { Page } from "azure-devops-ui/Page";
@@ -185,6 +185,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			}
 		}
 
+		const saveDataTeam = await this.getSavedData();
+
 		if (this.teams.length === 1) {
 			this.teamSelection.select(0);
 			this.setState({
@@ -196,7 +198,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			this.getTeamData();
 		} else if (this.queryParamsTeam) {
 			// See if the team selection from the URL is a valid team.
-			const queryTeamIndex = this.teams.findIndex(t => t.id == this.queryParamsTeam);
+			const queryTeamIndex = this.teams.findIndex(t => t.id === this.queryParamsTeam);
 			if (queryTeamIndex >= 0) {
 				// Select the team.
 				this.teamSelection.select(queryTeamIndex);
@@ -205,6 +207,18 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				});
 				this.setState({
 					selectedTeamName: this.teams[queryTeamIndex].name
+				});
+				this.getTeamData();
+			}
+		} else if (saveDataTeam) {
+			const saveDataTeamIndex = this.teams.findIndex(t => t.id === saveDataTeam);
+			if (saveDataTeamIndex >= 0) {
+				this.teamSelection.select(saveDataTeamIndex);
+				this.setState({
+					selectedTeam: this.teams[saveDataTeamIndex].id
+				});
+				this.setState({
+					selectedTeamName: this.teams[saveDataTeamIndex].name
 				});
 				this.getTeamData();
 			}
@@ -291,6 +305,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		});
 		this.getTeamData();
 		this.updateQueryParams();
+		this.saveSelectedTeam();
 	}
 
 	private handleSelectTeamIteration = (_event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>): void => {
@@ -363,6 +378,33 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const navService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 		navService.setQueryParams({ selectedTeam: "" + this.state.selectedTeam, selectedTeamIterationId: this.state.selectedTeamIterationId });
 		navService.setDocumentTitle("" + this.state.selectedTeamName + " : " + this.state.selectedTeamIterationName + " - Enhanced Sprint History");
+	}
+
+	private async getSavedData(): Promise<string> {
+		await SDK.ready();
+		const accessToken = await SDK.getAccessToken();
+		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
+		let dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
+
+		let savedData = "";
+
+		await dataManager.getValue<string>("selectedTeam" + this.state.project, {scopeType: "User"}).then((data) => {
+			savedData = data;
+		}, () => {
+			// It's fine if no saved data is found.
+		});
+
+		return savedData;
+	}
+
+	private async saveSelectedTeam(): Promise<void> {
+		await SDK.ready();
+		const accessToken = await SDK.getAccessToken();
+		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
+		let dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
+		await dataManager.setValue("selectedTeam" + this.state.project, this.state.selectedTeam, {scopeType: "User"}).then((_value) => {
+			// No need to return anything.
+		});
 	}
 }
 
