@@ -37,5 +37,5 @@ export function getIterationRelevantWorkItems(typedWorkItems: ITypedWorkItem[], 
 }
 
 export function getFlattenedRelevantRevisions(workItemHistory: IHubWorkItemIterationRevisions[]): ITypedWorkItem[] {
-	return workItemHistory.reduce((accumulator: ITypedWorkItem[], value) => accumulator.concat(value.relevantRevisions), []);
+	return workItemHistory.reduce((accumulator: ITypedWorkItem[], value) => accumulator.concat(value.relevantRevisions.sort((a, b) => a.revision - b.revision)), []);
 }

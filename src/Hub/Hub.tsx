@@ -355,7 +355,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
 		this.setState({ workItems: this.workItems });
 
-		let workItemsHistory: IHubWorkItemHistory[] = [];
+		const workItemsHistory: IHubWorkItemHistory[] = [];
 
 		for (let index = 0; index < this.workItems.length; index++) {
 			const element = this.workItems[index];
@@ -384,7 +384,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		await SDK.ready();
 		const accessToken = await SDK.getAccessToken();
 		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
-		let dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
+		const dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
 
 		let savedData = "";
 
@@ -401,7 +401,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		await SDK.ready();
 		const accessToken = await SDK.getAccessToken();
 		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
-		let dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
+		const dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
 		await dataManager.setValue("selectedTeam" + this.state.project, this.state.selectedTeam, {scopeType: "User"}).then((_value) => {
 			// No need to return anything.
 		});

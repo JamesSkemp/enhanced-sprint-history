@@ -5,7 +5,7 @@ import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 import { Card } from "azure-devops-ui/Card";
-import { CategoryScale, ChartData, ChartOptions, Chart as ChartJs, LineElement, LineOptions, LinearScale, Point, PointElement, Tooltip } from "chart.js";
+import { CategoryScale, ChartData, Chart as ChartJs, LineElement, LinearScale, Point, PointElement, Tooltip } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Tab, TabBar } from "azure-devops-ui/Tabs";
 
@@ -19,6 +19,9 @@ export interface IterationHistoryDisplayProps {
 interface State {
 	totalStoryPoints: number;
 	selectedTabId: string;
+	iterationWorkItemRevisions: IHubWorkItemIterationRevisions[],
+	changedWorkItems: ITypedWorkItem[],
+	flattenedRelevantRevisions: ITypedWorkItem[],
 }
 
 export class IterationHistoryDisplay extends React.Component<IterationHistoryDisplayProps, State> {
@@ -38,7 +41,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		super(props);
 		this.state = {
 			totalStoryPoints: 0,
-			selectedTabId: 'daily'
+			selectedTabId: 'daily',
+			iterationWorkItemRevisions: [],
+			changedWorkItems: [],
+			flattenedRelevantRevisions: [],
 		};
 	}
 
@@ -84,7 +90,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				.filter(wi => wi.id === workItem.id)
 				.sort((a, b) => a.revision === b.revision ? 0 : a.revision < b.revision ? 1 : -1);
 
-			let returnData: ITypedWorkItemWithRevision = {
+			const returnData: ITypedWorkItemWithRevision = {
 				workItem: workItem,
 				lastRevision: undefined,
 				change: []
@@ -128,7 +134,18 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 		let totalStoryPoints = 0;
 
-		let changedWorkItems = getChangedWorkItems(getFlattenedRelevantRevisions(iterationWorkItemRevisions));
+		const flattenedRelevantRevisions = getFlattenedRelevantRevisions(iterationWorkItemRevisions);
+		const changedWorkItems = getChangedWorkItems(flattenedRelevantRevisions);
+		// The following is for debugging purposes only.
+		// TODO add this to the display as a debug toggle perhaps?
+		/*if (this.state.iterationWorkItemRevisions.length === 0) {
+			this.setState({
+				iterationWorkItemRevisions: iterationWorkItemRevisions,
+				flattenedRelevantRevisions: flattenedRelevantRevisions,
+				changedWorkItems: changedWorkItems,
+			});
+			console.log(this.state);
+		}*/
 
 		const storyPointChanges = changedWorkItems.map((wi, i, a) => {
 			const workItemChange = getWorkItemChange(wi, i, a);
@@ -179,7 +196,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				changeCharacterCode = 8595; //8600
 			}
 
-			let updatedTotalStoryPoints = addedStoryPoints - subtractedStoryPoints;
+			const updatedTotalStoryPoints = addedStoryPoints - subtractedStoryPoints;
 			totalStoryPoints += updatedTotalStoryPoints;
 
 			const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
@@ -282,9 +299,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						</tr>
 					</thead>
 					<tbody>
-						{storyPointChanges.map((wi, i, a) => {
+						{storyPointChanges.map((wi, i) => {
 							return (
-								<tr>
+								<tr key={i}>
 									<td>{wi.changedDateFull.toLocaleString()}</td>
 									<td>
 										<a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />
@@ -324,7 +341,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 	private getDateRange(startDate: string, endDate: string, steps = 1): string[] {
 		const dateArray = [];
-		let currentDate = new Date(startDate);
+		const currentDate = new Date(startDate);
 
 		while (currentDate <= new Date(endDate)) {
 			dateArray.push(new Date(currentDate).toLocaleDateString());
@@ -354,9 +371,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		}
 
 		const currentDate = new Date().toLocaleDateString();
-		let storyPoints: (number | null)[] = [];
+		const storyPoints: (number | null)[] = [];
 		iterationDates.forEach((date, index) => {
-			let lastStoryPoints = iterationStoryPoints.get(date);
+			const lastStoryPoints = iterationStoryPoints.get(date);
 			if (lastStoryPoints) {
 				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
 			} else if (index === 0) {
@@ -369,7 +386,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					if (new Date(iterationDates[0]) <= new Date(itemKey)) {
 						break;
 					}
-					let dateStoryPoints = iterationStoryPoints.get(itemKey)!;
+					const dateStoryPoints = iterationStoryPoints.get(itemKey)!;
 					points = dateStoryPoints[dateStoryPoints.length - 1].totalStoryPoints;
 					itemKey = iterator.next().value;
 				}
