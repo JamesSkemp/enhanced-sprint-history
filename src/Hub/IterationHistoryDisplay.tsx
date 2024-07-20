@@ -304,7 +304,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								<tr key={i}>
 									<td>{wi.changedDateFull.toLocaleString()}</td>
 									<td>
-										<a href={wi.url} target="_blank" title={wi.title}>{wi.id}</a><br />
+										<a href={wi.url} target="_blank" rel="noreferrer" title={wi.title}>{wi.id}</a><br />
 										{wi.title}
 										<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>
 									</td>
