@@ -27,27 +27,27 @@
 	margin-right: 4px;
 
 	&.item-state-active {
-		border-color: rgb(0, 122, 204);
-		background-color: rgb(0, 122, 204);
+		border-color: rgb(0 122 204);
+		background-color: rgb(0 122 204);
 	}
 
 	&.item-state-closed {
-		border-color: rgb(51, 153, 51);
-		background-color: rgb(51, 153, 51);
+		border-color: rgb(51 153 51);
+		background-color: rgb(51 153 51);
 	}
 
 	&.item-state-new {
-		border-color: rgb(178, 178, 178);
-		background-color: rgb(178, 178, 178);
+		border-color: rgb(178 178 178);
+		background-color: rgb(178 178 178);
 	}
 
 	&.item-state-removed {
-		border-color: rgb(86, 136, 224);
+		border-color: rgb(86 136 224);
 		background-color: transparent;
 	}
 
 	&.item-state-resolved {
-		border-color: rgb(0, 122, 204);
-		background-color: rgb(0, 122, 204);
+		border-color: rgb(0 122 204);
+		background-color: rgb(0 122 204);
 	}
 }
