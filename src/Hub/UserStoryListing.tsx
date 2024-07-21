@@ -58,6 +58,7 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 						<Tab name="All Stories" id="all" />
 						<Tab name="Stories Still in the Sprint" id="current" />
 						<Tab name="Stories Removed from the Sprint" id="past" />
+						<Tab name="Stories by Assignee" id="assignee" />
 					</TabBar>
 
 					<div className="tab-content">
@@ -86,12 +87,64 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 				<p>These stories were in this iteration but have been removed.</p>
 				{this.workItemDisplay(UserStoryDisplayFilter.Past)}
 			</React.Fragment>;
+		} else if (selectedTabId === 'assignee') {
+			return <React.Fragment>
+				<p>These users were assigned stories.</p>
+				{this.assigneeWorkItemDisplay()}
+			</React.Fragment>
 		} else {
 			return <React.Fragment>
 				<p>These stories are or have been in this iteration.</p>
 				{this.workItemDisplay(UserStoryDisplayFilter.All)}
 			</React.Fragment>;
 		}
+	}
+
+	private assigneeWorkItemDisplay(): JSX.Element[] | JSX.Element {
+		if (this.typedWorkItems.length === 0) {
+			return <p>There are no matching user stories.</p>;
+		}
+
+		const map: Map<string, ITypedWorkItem[]> = new Map();
+		this.typedWorkItems.forEach((wi) => {
+			const collection = map.get(wi.assignedToId);
+			if (!collection) {
+				map.set(wi.assignedToId, [wi]);
+			} else {
+				collection.push(wi);
+			}
+		});
+
+		const assigneeIds = [...map.keys()];
+		const assignees = assigneeIds.map(assignee => {
+			const workItems = map.get(assignee)!;
+			const workItemsThisIteration = workItems.filter(wi => wi.iterationPath === this.props.iteration?.path);
+			return {
+				assigneeId: workItems[0].assignedToId,
+				assigneeDisplayName: workItems[0].assignedToDisplayName,
+				assigneeImageUrl: workItems[0].assignedToImageUrl,
+				workItems: workItems,
+				totalWorkItems: workItems.length,
+				totalWorkItemsThisIteration: workItemsThisIteration.length,
+				totalStoryPoints: workItems.map(wi => wi.storyPoints).reduce((a, b) => a + b, 0),
+				totalStoryPointsThisIteration: workItemsThisIteration.map(wi => wi.storyPoints).reduce((a, b) => a + b, 0),
+			};
+		}).sort((a, b) => a.assigneeDisplayName.localeCompare(b.assigneeDisplayName));
+
+		return assignees.map(assignee => {
+			return (
+				<div key={assignee.assigneeId ?? 'unassigned'} className="assignee-item">
+					{assignee.assigneeImageUrl === undefined ? <span className="unassigned-image"></span> : <img src={assignee.assigneeImageUrl} alt="" />}
+					<div>
+						<span>{assignee.assigneeDisplayName}</span>
+						<div>
+							<p>Currently in this iteration: {assignee.totalWorkItemsThisIteration} work items for {assignee.totalStoryPointsThisIteration} story points.</p>
+							<p>Ever in this iteration: {assignee.totalWorkItems} work items for {assignee.totalStoryPoints} story points.</p>
+						</div>
+					</div>
+				</div>
+			);
+		});
 	}
 
 	private workItemDisplay(filter: UserStoryDisplayFilter): JSX.Element[] | JSX.Element {

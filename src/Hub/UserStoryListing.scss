@@ -13,6 +13,28 @@
 	&>div {
 		margin-bottom: .75em;
 	}
+
+	.assignee-item {
+		display: grid;
+		grid-template-columns: 55px auto;
+		margin-bottom: 1.5em;
+
+		img {
+			border-radius: 22px;
+			height: 44px;
+			width: 44px;
+		}
+
+		&>div {
+			&>span {
+				font-size: 1.25em;
+			}
+
+			p {
+				margin: 0;
+			}
+		}
+	}
 }
 
 .state-circle {
