@@ -10,6 +10,7 @@ export interface ITypedWorkItem {
 	changedDateFull: Date;
 	state: string;
 	revision: number;
+	assignedTo: string;
 }
 
 export interface ITypedWorkItemWithRevision {

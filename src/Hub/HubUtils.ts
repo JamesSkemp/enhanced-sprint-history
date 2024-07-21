@@ -12,6 +12,7 @@ export function getTypedWorkItem(workItem: WorkItem): ITypedWorkItem {
 		changedDateFull: workItem.fields['System.ChangedDate'],
 		state: workItem.fields['System.State'],
 		revision: workItem.rev,
+		assignedTo: workItem.fields['System.AssignedTo'] ? workItem.fields['System.AssignedTo'].displayName : 'unassigned',
 	};
 }
 
