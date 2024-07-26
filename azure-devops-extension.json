@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "enhanced-sprint-history",
     "publisher": "JamesSkemp",
-    "version": "0.1.18",
+    "version": "0.1.19",
     "name": "Enhanced Sprint History",
     "description": "Azure DevOps Extension",
     "categories": [
@@ -13,6 +13,7 @@
         "burndown"
     ],
     "galleryFlags": [
+        "Public",
         "Preview"
     ],
     "targets": [
