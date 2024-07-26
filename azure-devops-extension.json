@@ -2,9 +2,9 @@
     "manifestVersion": 1,
     "id": "enhanced-sprint-history",
     "publisher": "JamesSkemp",
-    "version": "0.1.19",
+    "version": "0.1.20",
     "name": "Enhanced Sprint History",
-    "description": "Azure DevOps Extension",
+    "description": "Enhanced Sprint History supports viewing changes to user stories in an iteration over time.",
     "categories": [
         "Azure Boards"
     ],
