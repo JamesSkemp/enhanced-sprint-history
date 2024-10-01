@@ -151,6 +151,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			const workItemChange = getWorkItemChange(wi, i, a);
 			const storyClosed = isWorkItemClosed(wi);
 			const storyPointsChanged = workItemChange.change.indexOf('Story Points Changed') >= 0;
+			const storyRemoved = workItemChange.change.indexOf('Removed') >= 0;
 			let addedStoryPoints = 0;
 			let subtractedStoryPoints = 0;
 			let showAddedPoints = false;
@@ -167,12 +168,16 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				addedStoryPoints = wi.storyPoints;
 				showAddedPoints = true;
 			}
-			if (workItemChange.change.indexOf('Removed') >= 0) {
+			if (storyRemoved) {
 				subtractedStoryPoints = wi.storyPoints;
 				showSubtractedPoints = true;
 				if (storyClosed && workItemChange.lastRevision && isWorkItemClosed(workItemChange.lastRevision)) {
 					// If the story was already closed, no need to remove points.
 					subtractedStoryPoints = 0;
+				} else if (storyPointsChanged) {
+					addedStoryPoints = wi.storyPoints;
+					showAddedPoints = true;
+					subtractedStoryPoints += workItemChange.lastRevision?.storyPoints ?? 0;
 				}
 			}
 			if (storyPointsChanged) {

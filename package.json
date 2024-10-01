@@ -25,9 +25,9 @@
   "author": "James Skemp",
   "license": "MIT",
   "dependencies": {
-    "azure-devops-extension-api": "^4.240.0",
+    "azure-devops-extension-api": "^4.245.0",
     "azure-devops-extension-sdk": "^4.0.2",
-    "azure-devops-ui": "^2.241.1",
+    "azure-devops-ui": "^2.245.0",
     "chart.js": "^4.4.3",
     "react": "~16.13.1",
     "react-chartjs-2": "^5.2.0",
