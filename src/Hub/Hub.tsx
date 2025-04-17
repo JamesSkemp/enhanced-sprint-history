@@ -337,8 +337,19 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
 
+		const projectWorkItemTypes = await workItemTrackingClient.getWorkItemTypes(this.state.project);
+		const workItemTypesWithoutStoryPoints = projectWorkItemTypes.filter(a => !a.fields.some(f => f.referenceName === 'Microsoft.VSTS.Scheduling.StoryPoints'));
+
+		let baseQuery = "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')";
+		if (workItemTypesWithoutStoryPoints.length > 0) {
+			workItemTypesWithoutStoryPoints.forEach(wit => {
+				baseQuery += " AND ([System.WorkItemType] <> '" + wit.name + "')";
+			});
+		}
+
 		const workItemsEverInIteration = await workItemTrackingClient
-			.queryByWiql({ query: "Select [System.Id] From WorkItems Where [System.WorkItemType] = 'User Story' AND EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
+			//.queryByWiql({ query: "Select [System.Id] From WorkItems Where ([System.WorkItemType] = 'User Story' AND EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
+			.queryByWiql({ query: baseQuery });
 
 		if (!workItemsEverInIteration) {
 			this.showToast('There was an issue getting the work items for the selected iteration.');
