@@ -354,8 +354,21 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			return;
 		}
 		const witClient = getClient(WorkItemTrackingRestClient);
-		// TODO handle more than 200 work items; this endpoint only accepts/returns up to 200
-		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
+		// This endpoint only accepts/returns up to 200 results, so limit/chunk to that.
+		const maxRequestIds = 200;
+		if (workItems.length <= maxRequestIds) {
+			this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
+		} else {
+			// Temporary holder of work items, so they can be added all at once.
+			const workItemsHolder: WorkItem[] = [];
+			// Break the full list of ids into smaller chunks, and make a request for each.
+			const chunkedWorkItems = Array.from({ length: Math.ceil(workItems.length / maxRequestIds)}, (v, k) => workItems.slice(k * maxRequestIds, k * maxRequestIds + maxRequestIds));
+			// Must use a for of loop since we've got an await inside.
+			for (const chunk of chunkedWorkItems) {
+				workItemsHolder.push(...await witClient.getWorkItems(chunk.map(wi => wi.id)));
+			}
+			this.workItems = workItemsHolder;
+		}
 		this.setState({ workItems: this.workItems });
 
 		const workItemsHistory: IHubWorkItemHistory[] = [];
