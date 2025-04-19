@@ -1,4 +1,4 @@
-import { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItem, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
 
 export interface ITypedWorkItem {
 	id: number;
@@ -31,4 +31,9 @@ export interface IHubWorkItemIterationRevisions {
 	iterationPath: string | undefined;
 	firstRevision: ITypedWorkItem | undefined;
 	relevantRevisions: ITypedWorkItem[];
+}
+
+export interface IEnhancedSprintHistorySettings {
+	showAdditionalWorkItemTypes: boolean;
+	additionalWorkItemTypes: WorkItemType[];
 }

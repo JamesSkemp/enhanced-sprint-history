@@ -50,15 +50,15 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 
 		return (
 			<Card className="user-story-listing"
-				titleProps={{ text: "User Stories", ariaLevel: 3 }}>
+				titleProps={{ text: "Work Items", ariaLevel: 3 }}>
 				<section className="user-stories">
 					<TabBar
 						onSelectedTabChanged={this.onSelectedTabChanged}
 						selectedTabId={selectedTabId}>
-						<Tab name="All Stories" id="all" />
-						<Tab name="Stories Still in the Sprint" id="current" />
-						<Tab name="Stories Removed from the Sprint" id="past" />
-						<Tab name="Stories by Assignee" id="assignee" />
+						<Tab name="All Items" id="all" />
+						<Tab name="Items Still in the Sprint" id="current" />
+						<Tab name="Items Removed from the Sprint" id="past" />
+						<Tab name="Items by Assignee" id="assignee" />
 					</TabBar>
 
 					<div className="tab-content">
@@ -79,22 +79,22 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 		const { selectedTabId } = this.state;
 		if (selectedTabId === 'current') {
 			return <React.Fragment>
-				<p>These stories are currently in this iteration.</p>
+				<p>These items are currently in this iteration.</p>
 				{this.workItemDisplay(UserStoryDisplayFilter.Current)}
 			</React.Fragment>;
 		} else if (selectedTabId === 'past') {
 			return <React.Fragment>
-				<p>These stories were in this iteration but have been removed.</p>
+				<p>These items were in this iteration but have been removed.</p>
 				{this.workItemDisplay(UserStoryDisplayFilter.Past)}
 			</React.Fragment>;
 		} else if (selectedTabId === 'assignee') {
 			return <React.Fragment>
-				<p>These users were assigned stories.</p>
+				<p>These users were assigned items.</p>
 				{this.assigneeWorkItemDisplay()}
 			</React.Fragment>
 		} else {
 			return <React.Fragment>
-				<p>These stories are or have been in this iteration.</p>
+				<p>These items are or have been in this iteration.</p>
 				{this.workItemDisplay(UserStoryDisplayFilter.All)}
 			</React.Fragment>;
 		}
@@ -102,7 +102,7 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 
 	private assigneeWorkItemDisplay(): JSX.Element[] | JSX.Element {
 		if (this.typedWorkItems.length === 0) {
-			return <p>There are no matching user stories.</p>;
+			return <p>There are no matching items.</p>;
 		}
 
 		const map: Map<string, ITypedWorkItem[]> = new Map();
@@ -163,7 +163,7 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 		}
 
 		if (filteredWorkItems.length === 0) {
-			return <p>There are no matching user stories.</p>;
+			return <p>There are no matching items.</p>;
 		}
 
 		return filteredWorkItems.sort((a, b) => {

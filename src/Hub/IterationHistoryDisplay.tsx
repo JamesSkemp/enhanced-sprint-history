@@ -280,7 +280,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 		return (
 			<Card className="iteration-history-display"
-				titleProps={{ text: "Sprint User Story History", ariaLevel: 3 }}>
+				titleProps={{ text: "Sprint History", ariaLevel: 3 }}>
 				<div className="display-child tab-charts">
 					<TabBar
 						onSelectedTabChanged={this.onSelectedTabChanged}

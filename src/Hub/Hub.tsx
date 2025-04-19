@@ -15,9 +15,10 @@ import { IterationWorkItems, TaskboardColumn, TaskboardWorkItemColumn, TeamSetti
 import { CoreRestClient, WebApiTeam } from "azure-devops-extension-api/Core";
 import { Dropdown } from "azure-devops-ui/Dropdown";
 import { ListSelection } from "azure-devops-ui/List";
-import { IHubWorkItemHistory } from "./HubInterfaces";
+import { IEnhancedSprintHistorySettings, IHubWorkItemHistory } from "./HubInterfaces";
 import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
 import { UserStoryListing } from "./UserStoryListing";
+import { Settings } from "./Settings";
 
 interface IHubContentState {
 	project: string;
@@ -41,6 +42,8 @@ interface IHubContentState {
 	 */
 	workItemTypes: WorkItemType[];
 	workItemsHistory: IHubWorkItemHistory[];
+	projectWorkItemTypes: WorkItemType[];
+	settings: IEnhancedSprintHistorySettings;
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
@@ -73,7 +76,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			taskboardColumns: [],
 			workItems: [],
 			workItemTypes: [],
-			workItemsHistory: []
+			workItemsHistory: [],
+			projectWorkItemTypes: [],
+			settings: { showAdditionalWorkItemTypes: false, additionalWorkItemTypes: [] }
 		};
 	}
 
@@ -150,6 +155,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
 
 				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems}></UserStoryListing>
+
+				<Settings onSaveSettings={this.saveSettings} projectWorkItemTypes={this.state.projectWorkItemTypes} savedSettings={this.state.settings}></Settings>
 			</Page>
 		);
 	}
@@ -184,6 +191,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				this.queryParamsTeamIteration = queryParams.queryTeamIteration;
 			}
 		}
+
+		await this.getProjectWorkItemTypes();
 
 		const saveDataTeam = await this.getSavedData();
 
@@ -322,6 +331,13 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		this.updateQueryParams();
 	}
 
+	private async getProjectWorkItemTypes() {
+		await SDK.ready();
+		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
+		const projectWorkItemTypes = await workItemTrackingClient.getWorkItemTypes(this.state.project);
+		this.setState({ projectWorkItemTypes: projectWorkItemTypes });
+	}
+
 	private async getTeamIterationData() {
 		await SDK.ready();
 
@@ -333,9 +349,34 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const selectedIterationPath = selectedIteration.path;
 
 		const workItemTrackingClient = getClient(WorkItemTrackingRestClient);
+		const workItemTypesWithoutStoryPoints = this.state.projectWorkItemTypes.filter(a => !a.fields.some(f => f.referenceName === 'Microsoft.VSTS.Scheduling.StoryPoints'));
+
+		let baseQuery = "Select [System.Id] From WorkItems Where EVER ([System.IterationPath] = '" + selectedIterationPath + "')";
+		if (workItemTypesWithoutStoryPoints.length > 0) {
+			workItemTypesWithoutStoryPoints.forEach(wit => {
+				baseQuery += " AND ([System.WorkItemType] <> '" + wit.name + "')";
+			});
+		}
+
+		if (this.state.settings) {
+			if (this.state.settings.showAdditionalWorkItemTypes && this.state.settings.additionalWorkItemTypes.length > 0) {
+				baseQuery += " AND (";
+				for (let index = 0; index < this.state.settings.additionalWorkItemTypes.length; index++) {
+					const wit = this.state.settings.additionalWorkItemTypes[index];
+					if (index !== 0) {
+						baseQuery += " OR ";
+					}
+					baseQuery += "([System.WorkItemType] = '" + wit.name + "')";
+				}
+				baseQuery += ")";
+			} else {
+				// Default to User Stories.
+				baseQuery += " AND ([System.WorkItemType] = 'User Story')";
+			}
+		}
 
 		const workItemsEverInIteration = await workItemTrackingClient
-			.queryByWiql({ query: "Select [System.Id] From WorkItems Where [System.WorkItemType] = 'User Story' AND EVER ([System.IterationPath] = '" + selectedIterationPath + "')" });
+			.queryByWiql({ query: baseQuery });
 
 		if (!workItemsEverInIteration) {
 			this.showToast('There was an issue getting the work items for the selected iteration.');
@@ -347,12 +388,28 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
 	private async getWorkItemData(workItems: WorkItemReference[]) {
 		if (!workItems.length) {
+			this.workItems = [];
+			this.setState({ workItems: this.workItems });
+			this.setState({ workItemsHistory: [] });
 			this.showToast('No work items found for this iteration.');
 			return;
 		}
 		const witClient = getClient(WorkItemTrackingRestClient);
-		// TODO handle more than 200 work items; this endpoint only accepts/returns up to 200
-		this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
+		// This endpoint only accepts/returns up to 200 results, so limit/chunk to that.
+		const maxRequestIds = 200;
+		if (workItems.length <= maxRequestIds) {
+			this.workItems = await witClient.getWorkItems(workItems.map(wi => wi.id));
+		} else {
+			// Temporary holder of work items, so they can be added all at once.
+			const workItemsHolder: WorkItem[] = [];
+			// Break the full list of ids into smaller chunks, and make a request for each.
+			const chunkedWorkItems = Array.from({ length: Math.ceil(workItems.length / maxRequestIds)}, (v, k) => workItems.slice(k * maxRequestIds, k * maxRequestIds + maxRequestIds));
+			// Must use a for of loop since we've got an await inside.
+			for (const chunk of chunkedWorkItems) {
+				workItemsHolder.push(...await witClient.getWorkItems(chunk.map(wi => wi.id)));
+			}
+			this.workItems = workItemsHolder;
+		}
 		this.setState({ workItems: this.workItems });
 
 		const workItemsHistory: IHubWorkItemHistory[] = [];
@@ -386,9 +443,19 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
 		const dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
 
-		let savedData = "";
+		await dataManager.getValue<string>("enhancedSprintHistory" + this.state.project, { scopeType: "Default" }).then((data) => {
+			if (data) {
+				const savedData: IEnhancedSprintHistorySettings = JSON.parse(data);
+				if (savedData) {
+					this.setState({ settings: savedData });
+				}
+			}
+		}, () => {
+			// It's fine if no saved data is found.
+		});
 
-		await dataManager.getValue<string>("selectedTeam" + this.state.project, {scopeType: "User"}).then((data) => {
+		let savedData = "";
+		await dataManager.getValue<string>("selectedTeam" + this.state.project, { scopeType: "User" }).then((data) => {
 			savedData = data;
 		}, () => {
 			// It's fine if no saved data is found.
@@ -404,6 +471,24 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
 		await dataManager.setValue("selectedTeam" + this.state.project, this.state.selectedTeam, {scopeType: "User"}).then(() => {
 			// No need to return anything.
+		});
+	}
+
+	// Must be an arrow function to access `this`.
+	private saveSettings = (updatedSettings: IEnhancedSprintHistorySettings): void => {
+		this.setState({ settings: updatedSettings });
+		this.saveProjectSettings();
+	}
+
+	private async saveProjectSettings(): Promise<void> {
+		await SDK.ready();
+		const accessToken = await SDK.getAccessToken();
+		const extDataService = await SDK.getService<IExtensionDataService>(CommonServiceIds.ExtensionDataService);
+		const dataManager = await extDataService.getExtensionDataManager(SDK.getExtensionContext().id, accessToken);
+		await dataManager.setValue("enhancedSprintHistory" + this.state.project, JSON.stringify(this.state.settings), { scopeType: "Default" }).then(() => {
+			// No need to return anything.
+			this.showToast('Settings saved.');
+			this.getTeamIterationData();
 		});
 	}
 }

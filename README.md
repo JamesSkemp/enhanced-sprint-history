@@ -1,10 +1,12 @@
 # Enhanced Sprint History
-Enhanced Sprint History supports viewing changes to user stories in an iteration over time.
+Enhanced Sprint History supports viewing changes to user stories, or optionally other supported work items, in an iteration over time.
 
 It features:
 1. Three charts showing the sprint state.
-2. The history of user story changes on the sprint.
-3. A listing of all user stories that are or were in the sprint.
+2. The history of work item changes on the sprint.
+3. A listing of all items that are or were in the sprint.
+4. The ability to add other work item types.
+	- Additional work item types must have the built-in **Story Points** field.
 
 - [Primary Source](https://git.ebacher-skemp.com/azure-devops/enhanced-sprint-history)
 - [Azure DevOps Mirror](https://dev.azure.com/jamesrskemp/azure-devops-extensions/_git/enhanced-sprint-history)
