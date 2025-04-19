@@ -8,11 +8,14 @@ import { Card } from "azure-devops-ui/Card";
 import { CategoryScale, ChartData, Chart as ChartJs, LineElement, LinearScale, Point, PointElement, Tooltip } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Tab, TabBar } from "azure-devops-ui/Tabs";
+import { WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItemTypeIconDisplay } from "./WorkItemTypeIconDisplay";
 
 ChartJs.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 export interface IterationHistoryDisplayProps {
 	iteration: TeamSettingsIteration | undefined;
+	projectWorkItemTypes: WorkItemType[];
 	workItemHistory: IHubWorkItemHistory[];
 }
 
@@ -219,7 +222,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				totalStoryPointsClass: totalStoryPointsClass,
 				totalStoryPoints: totalStoryPoints,
 				changeCharacterCode: changeCharacterCode,
-				state: wi.state
+				state: wi.state,
+				type: wi.type,
 			};
 		});
 
@@ -296,7 +300,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 					<thead>
 						<tr>
 							<th className="date">Date</th>
-							<th>User Story</th>
+							<th>Work Item</th>
 							<th>Change</th>
 							<th className="story-points">Story Points<br />Added</th>
 							<th className="story-points">Story Points<br />Removed</th>
@@ -309,6 +313,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								<tr key={i}>
 									<td>{wi.changedDateFull.toLocaleString()}</td>
 									<td>
+										<WorkItemTypeIconDisplay projectWorkItemTypes={this.props.projectWorkItemTypes} type={wi.type} />
 										<a href={wi.url} target="_blank" rel="noreferrer" title={wi.title}>{wi.id}</a><br />
 										{wi.title}
 										<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>

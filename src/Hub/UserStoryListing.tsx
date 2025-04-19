@@ -2,14 +2,16 @@ import * as React from "react";
 import "./UserStoryListing.scss";
 
 import { Card } from "azure-devops-ui/Card";
-import { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
+import { WorkItem, WorkItemType } from "azure-devops-extension-api/WorkItemTracking";
 import { ITypedWorkItem } from "./HubInterfaces";
 import { getTypedWorkItem } from "./HubUtils";
 import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
 import { Tab, TabBar } from "azure-devops-ui/Tabs";
+import { WorkItemTypeIconDisplay } from "./WorkItemTypeIconDisplay";
 
 export interface UserStoryListingProps {
 	iteration: TeamSettingsIteration | undefined;
+	projectWorkItemTypes: WorkItemType[];
 	workItems: WorkItem[];
 }
 
@@ -181,6 +183,7 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 		}).map(workItem => {
 			return (
 				<div key={workItem.id}>
+					<WorkItemTypeIconDisplay projectWorkItemTypes={this.props.projectWorkItemTypes} type={workItem.type} />
 					<a href={workItem.url} target="_blank" rel="noreferrer">{workItem.id}</a> : {workItem.title} ({workItem.storyPoints})
 					<div className="current-iteration secondary-text font-size-ms">Current Iteration: {workItem.iterationPath}</div>
 					<div className="current-state secondary-text font-size-ms">

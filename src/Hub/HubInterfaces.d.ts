@@ -13,6 +13,7 @@ export interface ITypedWorkItem {
 	assignedToDisplayName: string;
 	assignedToId: string;
 	assignedToImageUrl: string;
+	type: string;
 }
 
 export interface ITypedWorkItemWithRevision {

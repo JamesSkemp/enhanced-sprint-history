@@ -15,6 +15,7 @@ export function getTypedWorkItem(workItem: WorkItem): ITypedWorkItem {
 		assignedToDisplayName: workItem.fields['System.AssignedTo'] ? workItem.fields['System.AssignedTo'].displayName : 'unassigned',
 		assignedToId: workItem.fields['System.AssignedTo']?.id,
 		assignedToImageUrl: workItem.fields['System.AssignedTo']?.imageUrl,
+		type: workItem.fields['System.WorkItemType'],
 	};
 }
 

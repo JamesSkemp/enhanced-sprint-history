@@ -152,11 +152,11 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				{this.state.selectedTeamIterationName && <h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} />
+				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} />
 
-				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems}></UserStoryListing>
+				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems} projectWorkItemTypes={this.state.projectWorkItemTypes} />
 
-				<Settings onSaveSettings={this.saveSettings} projectWorkItemTypes={this.state.projectWorkItemTypes} savedSettings={this.state.settings}></Settings>
+				<Settings onSaveSettings={this.saveSettings} projectWorkItemTypes={this.state.projectWorkItemTypes} savedSettings={this.state.settings} />
 			</Page>
 		);
 	}
