@@ -13,6 +13,7 @@ export interface UserStoryListingProps {
 	iteration: TeamSettingsIteration | undefined;
 	projectWorkItemTypes: WorkItemType[];
 	workItems: WorkItem[];
+	doneLoading: boolean;
 }
 
 interface State {
@@ -47,7 +48,11 @@ export class UserStoryListing extends React.Component<UserStoryListingProps, Sta
 		const { selectedTabId } = this.state;
 
 		if (!this.typedWorkItems?.length) {
-			return null;
+			if (this.props.doneLoading) {
+				return (<div><p>No items found.</p></div>);
+			} else {
+				return (<div className="loader-container"><div className="loader"></div><div>Loading Data</div></div>);
+			}
 		}
 
 		return (

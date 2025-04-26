@@ -44,6 +44,7 @@ interface IHubContentState {
 	workItemsHistory: IHubWorkItemHistory[];
 	projectWorkItemTypes: WorkItemType[];
 	settings: IEnhancedSprintHistorySettings;
+	doneLoading: boolean;
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
@@ -78,7 +79,8 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			workItemTypes: [],
 			workItemsHistory: [],
 			projectWorkItemTypes: [],
-			settings: { showAdditionalWorkItemTypes: false, additionalWorkItemTypes: [] }
+			settings: { showAdditionalWorkItemTypes: false, additionalWorkItemTypes: [] },
+			doneLoading: false,
 		};
 	}
 
@@ -152,9 +154,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				{this.state.selectedTeamIterationName && <h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} />
+				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} />
 
-				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems} projectWorkItemTypes={this.state.projectWorkItemTypes} />
+				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} />
 
 				<Settings onSaveSettings={this.saveSettings} projectWorkItemTypes={this.state.projectWorkItemTypes} savedSettings={this.state.settings} />
 			</Page>
@@ -387,13 +389,19 @@ class HubContent extends React.Component<{}, IHubContentState> {
 	}
 
 	private async getWorkItemData(workItems: WorkItemReference[]) {
+		// Clear previous items.
+		this.workItems = [];
+		this.setState({ workItems: this.workItems });
+		this.setState({ workItemsHistory: [] });
+
 		if (!workItems.length) {
-			this.workItems = [];
-			this.setState({ workItems: this.workItems });
-			this.setState({ workItemsHistory: [] });
 			this.showToast('No work items found for this iteration.');
+			this.setState({ doneLoading: true });
 			return;
+		} else {
+			this.setState({ doneLoading: false });
 		}
+
 		const witClient = getClient(WorkItemTrackingRestClient);
 		// This endpoint only accepts/returns up to 200 results, so limit/chunk to that.
 		const maxRequestIds = 200;

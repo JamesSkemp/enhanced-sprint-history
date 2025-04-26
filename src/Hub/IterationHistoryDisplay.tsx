@@ -17,6 +17,7 @@ export interface IterationHistoryDisplayProps {
 	iteration: TeamSettingsIteration | undefined;
 	projectWorkItemTypes: WorkItemType[];
 	workItemHistory: IHubWorkItemHistory[];
+	doneLoading: boolean;
 }
 
 interface State {
@@ -56,7 +57,11 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		const { selectedTabId } = this.state;
 
 		if (!this.props.workItemHistory?.length) {
-			return null;
+			if (this.props.doneLoading) {
+				return null;
+			} else {
+				return (<div className="loader-container"><div className="loader"></div><div>Loading Data</div></div>);
+			}
 		}
 
 		const iterationWorkItemRevisions: IHubWorkItemIterationRevisions[] = this.props.workItemHistory.map(wiHistory => {
