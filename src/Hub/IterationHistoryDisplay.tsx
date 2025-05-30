@@ -294,7 +294,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		let addIterationEndRowAfter = false;
 		const preIterationChanges = { changes: 0, storyPoints: 0 };
 		const postIterationChanges = { changes: 0, storyPoints: 0 };
-		const canDisplayEndSprintRow = (new Date()).toISOString() >= this.props.iteration!.attributes.finishDate.toISOString();
+		const canDisplayEndSprintRow = this.props.iteration && (new Date()).toISOString() >= this.props.iteration!.attributes.finishDate.toISOString();
 
 		return (
 			<Card className="iteration-history-display"
