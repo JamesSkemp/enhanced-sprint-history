@@ -287,6 +287,14 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		let addedIterationStartRow = false;
+		let addedIterationEndRow = false;
+		let addIterationStartRow = false;
+		let addIterationEndRowBefore = false;
+		let addIterationEndRowAfter = false;
+		const preIterationChanges = { changes: 0, storyPoints: 0 };
+		const postIterationChanges = { changes: 0, storyPoints: 0 };
+
 		return (
 			<Card className="iteration-history-display"
 				titleProps={{ text: "Sprint History", ariaLevel: 3 }}>
@@ -313,21 +321,119 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 						</tr>
 					</thead>
 					<tbody>
-						{storyPointChanges.map((wi, i) => {
+						{this.state.selectedTabId === 'daily' && storyPointChanges.map((wi, i) => {
+							if (addIterationStartRow && !addedIterationStartRow) {
+								addIterationStartRow = false;
+								addedIterationStartRow = true;
+							}
+							if (addIterationEndRowBefore && !addedIterationEndRow) {
+								addIterationEndRowBefore = false;
+								addedIterationEndRow = true;
+							} else if (addIterationEndRowAfter && !addedIterationEndRow) {
+								addIterationEndRowAfter = false;
+								addedIterationEndRow = true;
+							}
+
+							if (!addedIterationStartRow && wi.changedDateFull < this.props.iteration!.attributes.startDate) {
+								preIterationChanges.changes++;
+								preIterationChanges.storyPoints = wi.totalStoryPoints;
+								return null;
+							}
+
+							if (!addedIterationStartRow && wi.changedDateFull >= this.props.iteration!.attributes.startDate) {
+								addIterationStartRow = true
+							}
+							if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
+								addIterationEndRowAfter = true;
+								postIterationChanges.changes++;
+								postIterationChanges.storyPoints = wi.totalStoryPoints;
+								return (
+									<tr key={i}><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
+								);
+							} else if (!addedIterationEndRow && wi.changedDateFull >= this.props.iteration!.attributes.finishDate) {
+								postIterationChanges.changes++;
+								postIterationChanges.storyPoints = wi.totalStoryPoints;
+							}
+
+							if (addIterationStartRow && postIterationChanges.changes !== 0) {
+								return (
+									<tr key={i}><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''}</td></tr>
+								);
+							}
+
 							return (
-								<tr key={i}>
-									<td>{wi.changedDateFull.toLocaleString()}</td>
-									<td>
-										<WorkItemTypeIconDisplay projectWorkItemTypes={this.props.projectWorkItemTypes} type={wi.type} />
-										<a href={wi.url} target="_blank" rel="noreferrer" title={wi.title}>{wi.id}</a><br />
-										{wi.title}
-										<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>
-									</td>
-									<td>{wi.workItemChange.change.join(', ')}</td>
-									<td className="story-points increase">{wi.addedStoryPoints !== 0 || wi.showAddedPoints ? '+' + wi.addedStoryPoints : ''}</td>
-									<td className="story-points decrease">{wi.subtractedStoryPoints !== 0 || wi.showSubtractedPoints ? '-' + wi.subtractedStoryPoints : ''}</td>
-									<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
-								</tr>
+								<React.Fragment key={i}>
+									{
+										addIterationStartRow && <tr><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''}</td></tr>
+									}
+									{
+										addIterationEndRowBefore && <tr><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
+									}
+									<tr>
+										<td>{wi.changedDateFull.toLocaleString()}</td>
+										<td>
+											<WorkItemTypeIconDisplay projectWorkItemTypes={this.props.projectWorkItemTypes} type={wi.type} />
+											<a href={wi.url} target="_blank" rel="noreferrer" title={wi.title}>{wi.id}</a><br />
+											{wi.title}
+											<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>
+										</td>
+										<td>{wi.workItemChange.change.join(', ')}</td>
+										<td className="story-points increase">{wi.addedStoryPoints !== 0 || wi.showAddedPoints ? '+' + wi.addedStoryPoints : ''}</td>
+										<td className="story-points decrease">{wi.subtractedStoryPoints !== 0 || wi.showSubtractedPoints ? '-' + wi.subtractedStoryPoints : ''}</td>
+										<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
+									</tr>
+								</React.Fragment>
+							);
+						})
+						}
+
+						{(this.state.selectedTabId === 'complete' || this.state.selectedTabId === 'daily-complete') && storyPointChanges.map((wi, i) => {
+							if (addIterationStartRow && !addedIterationStartRow) {
+								addIterationStartRow = false;
+								addedIterationStartRow = true;
+							}
+							if (addIterationEndRowBefore && !addedIterationEndRow) {
+								addIterationEndRowBefore = false;
+								addedIterationEndRow = true;
+							} else if (addIterationEndRowAfter && !addedIterationEndRow) {
+								addIterationEndRowAfter = false;
+								addedIterationEndRow = true;
+							}
+
+							if (!addedIterationStartRow && wi.changedDateFull >= this.props.iteration!.attributes.startDate) {
+								addIterationStartRow = true
+							}
+							if (!addedIterationEndRow && wi.changedDateFull >= this.props.iteration!.attributes.finishDate) {
+								addIterationEndRowBefore = true;
+							} else if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
+								addIterationEndRowAfter = true;
+							}
+
+							return (
+								<React.Fragment key={i}>
+									{
+										addIterationStartRow && <tr><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Started</strong></td></tr>
+									}
+									{
+										addIterationEndRowBefore && <tr><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
+									}
+									<tr>
+										<td>{wi.changedDateFull.toLocaleString()}</td>
+										<td>
+											<WorkItemTypeIconDisplay projectWorkItemTypes={this.props.projectWorkItemTypes} type={wi.type} />
+											<a href={wi.url} target="_blank" rel="noreferrer" title={wi.title}>{wi.id}</a><br />
+											{wi.title}
+											<div className="current-state secondary-text font-size-ms">Current State: {wi.state}</div>
+										</td>
+										<td>{wi.workItemChange.change.join(', ')}</td>
+										<td className="story-points increase">{wi.addedStoryPoints !== 0 || wi.showAddedPoints ? '+' + wi.addedStoryPoints : ''}</td>
+										<td className="story-points decrease">{wi.subtractedStoryPoints !== 0 || wi.showSubtractedPoints ? '-' + wi.subtractedStoryPoints : ''}</td>
+										<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
+									</tr>
+									{
+										addIterationEndRowAfter && <tr><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
+									}
+								</React.Fragment>
 							);
 						})
 						}
