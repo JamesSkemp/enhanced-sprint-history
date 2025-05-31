@@ -287,6 +287,8 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		const iterationStartDate = this.props.iteration!.attributes.startDate;
+		const iterationFinishDate = this.props.iteration!.attributes.finishDate;
 		let addedIterationStartRow = false;
 		let addedIterationEndRow = false;
 		let addIterationStartRow = false;
@@ -294,7 +296,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		let addIterationEndRowAfter = false;
 		const preIterationChanges = { changes: 0, storyPoints: 0 };
 		const postIterationChanges = { changes: 0, storyPoints: 0 };
-		const canDisplayEndSprintRow = this.props.iteration && (new Date()).toISOString() >= this.props.iteration!.attributes.finishDate.toISOString();
+		const canDisplayEndSprintRow = this.props.iteration && (new Date()).toISOString() > iterationFinishDate.toISOString();
 
 		return (
 			<Card className="iteration-history-display"
@@ -335,43 +337,44 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								addedIterationEndRow = true;
 							}
 
-							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] < this.props.iteration!.attributes.startDate.toISOString().split("T")[0]) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] < iterationStartDate.toISOString().split("T")[0]) {
 								preIterationChanges.changes++;
 								preIterationChanges.storyPoints = wi.totalStoryPoints;
 								return null;
 							}
 
-							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= this.props.iteration!.attributes.startDate.toISOString().split("T")[0]) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= iterationStartDate.toISOString().split("T")[0]) {
 								addIterationStartRow = true
 							}
 							if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
 								addIterationEndRowAfter = true;
-								if (wi.changedDateFull.toISOString().split("T")[0] >= this.props.iteration!.attributes.finishDate.toISOString().split("T")[0]) {
+								if (wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 									postIterationChanges.changes++;
 									postIterationChanges.storyPoints = wi.totalStoryPoints;
 									if (canDisplayEndSprintRow) {
 										return (
-											<tr key={i}><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
+											<tr key={i}><td>{iterationFinishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
 										);
 									} else {
 										return null;
 									}
 								}
-							} else if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > this.props.iteration!.attributes.finishDate.toISOString().split("T")[0]) {
+							} else if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 								postIterationChanges.changes++;
 								postIterationChanges.storyPoints = wi.totalStoryPoints;
+								return null;
 							}
 
 							if (addIterationStartRow && postIterationChanges.changes !== 0) {
 								return (
-									<tr key={i}><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''} &nbsp;</td></tr>
+									<tr key={i}><td>{iterationStartDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''} &nbsp;</td></tr>
 								);
 							}
 
 							return (
 								<React.Fragment key={i}>
 									{
-										addIterationStartRow && <tr><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''} &nbsp;</td></tr>
+										addIterationStartRow && <tr><td>{iterationStartDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Started</strong><br />{preIterationChanges.changes !== 0 ? `${preIterationChanges.changes} pre-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}>{preIterationChanges.changes !== 0 ? preIterationChanges.storyPoints : ''} &nbsp;</td></tr>
 									}
 									<tr>
 										<td>{wi.changedDateFull.toLocaleString()}</td>
@@ -387,7 +390,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 										<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
 									</tr>
 									{
-										addIterationEndRowAfter && canDisplayEndSprintRow && <tr key={i}><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
+										addIterationEndRowAfter && canDisplayEndSprintRow && <tr key={i}><td>{iterationFinishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={4}><strong>Sprint Ended</strong><br />{postIterationChanges.changes !== 0 ? `${postIterationChanges.changes} post-sprint changes hidden from this view` : ''}</td><td className={wi.totalStoryPointsClass}></td></tr>
 									}
 								</React.Fragment>
 							);
@@ -407,10 +410,11 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								addedIterationEndRow = true;
 							}
 
-							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= this.props.iteration!.attributes.startDate.toISOString().split("T")[0]) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= iterationStartDate.toISOString().split("T")[0]) {
 								addIterationStartRow = true
 							}
-							if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > this.props.iteration!.attributes.finishDate.toISOString().split("T")[0]) {
+
+							if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 								addIterationEndRowBefore = true;
 							} else if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
 								addIterationEndRowAfter = true;
@@ -419,10 +423,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 							return (
 								<React.Fragment key={i}>
 									{
-										addIterationStartRow && <tr><td>{this.props.iteration!.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Started</strong></td></tr>
+										addIterationStartRow && <tr><td>{iterationStartDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Started</strong></td></tr>
 									}
 									{
-										addIterationEndRowBefore && canDisplayEndSprintRow && <tr><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
+										addIterationEndRowBefore && canDisplayEndSprintRow && <tr><td>{iterationFinishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
 									}
 									<tr>
 										<td>{wi.changedDateFull.toLocaleString()}</td>
@@ -438,7 +442,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 										<td className={wi.totalStoryPointsClass}>{wi.totalStoryPoints} {String.fromCharCode(wi.changeCharacterCode)}</td>
 									</tr>
 									{
-										addIterationEndRowAfter && canDisplayEndSprintRow && <tr><td>{this.props.iteration!.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
+										addIterationEndRowAfter && canDisplayEndSprintRow && <tr><td>{iterationFinishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })}</td><td colSpan={5}><strong>Sprint Ended</strong></td></tr>
 									}
 								</React.Fragment>
 							);
