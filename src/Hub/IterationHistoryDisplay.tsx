@@ -286,6 +286,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		if (!this.props.iteration) {
+			return null;
+		}
+
 		const iterationStartDate = this.props.iteration!.attributes.startDate;
 		const iterationFinishDate = this.props.iteration!.attributes.finishDate;
 		let addedIterationStartRow = false;
