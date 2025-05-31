@@ -256,7 +256,6 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			changedStoriesDates[changedStoriesDates.length - 1]
 		) : [];
 		const completeHistoryDatesData = this.getIterationDatesLastStoryPoints(completeHistoryDates, changedStoriesByDate);
-
 		this.dailyCompleteChartData = {
 			labels: completeHistoryDates,
 			datasets: [
@@ -474,8 +473,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 	private getDateRange(startDate: string, endDate: string, steps = 1): string[] {
 		const dateArray = [];
 		const currentDate = new Date(startDate);
+		const endDateOnly = new Date(endDate).toISOString().split("T")[0];
 
-		while (currentDate <= new Date(endDate)) {
+		while (currentDate.toISOString().split("T")[0] <= endDateOnly) {
 			dateArray.push(new Date(currentDate).toLocaleDateString());
 			currentDate.setUTCDate(currentDate.getUTCDate() + steps);
 		}
