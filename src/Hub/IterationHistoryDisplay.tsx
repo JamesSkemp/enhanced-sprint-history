@@ -305,7 +305,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		let addIterationEndRowAfter = false;
 		const preIterationChanges = { changes: 0, storyPoints: 0 };
 		const postIterationChanges = { changes: 0, storyPoints: 0 };
-		const canDisplayEndSprintRow = this.props.iteration && this.getDateStringFormat(new Date(), 'YYYYMMDD') > this.getDateStringFormat(iterationFinishDate, 'YYYYMMDD');
+		const canDisplayEndSprintRow = this.props.iteration && (new Date()).toISOString() > iterationFinishDate.toISOString();
 
 		return (
 			<Card className="iteration-history-display"
@@ -346,18 +346,18 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								addedIterationEndRow = true;
 							}
 
-							if (!addedIterationStartRow && this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') < this.getDateStringFormat(iterationStartDate, 'YYYYMMDD')) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] < iterationStartDate.toISOString().split("T")[0]) {
 								preIterationChanges.changes++;
 								preIterationChanges.storyPoints = wi.totalStoryPoints;
 								return null;
 							}
 
-							if (!addedIterationStartRow && this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') >= this.getDateStringFormat(iterationStartDate, 'YYYYMMDD')) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= iterationStartDate.toISOString().split("T")[0]) {
 								addIterationStartRow = true
 							}
 							if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
 								addIterationEndRowAfter = true;
-								if (this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') > this.getDateStringFormat(iterationFinishDate, 'YYYYMMDD')) {
+								if (wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 									postIterationChanges.changes++;
 									postIterationChanges.storyPoints = wi.totalStoryPoints;
 									if (canDisplayEndSprintRow) {
@@ -368,7 +368,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 										return null;
 									}
 								}
-							} else if (!addedIterationEndRow && this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') > this.getDateStringFormat(iterationFinishDate, 'YYYYMMDD')) {
+							} else if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 								postIterationChanges.changes++;
 								postIterationChanges.storyPoints = wi.totalStoryPoints;
 								return null;
@@ -419,11 +419,11 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 								addedIterationEndRow = true;
 							}
 
-							if (!addedIterationStartRow && this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') >= this.getDateStringFormat(iterationStartDate, 'YYYYMMDD')) {
+							if (!addedIterationStartRow && wi.changedDateFull.toISOString().split("T")[0] >= iterationStartDate.toISOString().split("T")[0]) {
 								addIterationStartRow = true
 							}
 
-							if (!addedIterationEndRow && this.getDateStringFormat(wi.changedDateFull, 'YYYYMMDD') > this.getDateStringFormat(iterationFinishDate, 'YYYYMMDD')) {
+							if (!addedIterationEndRow && wi.changedDateFull.toISOString().split("T")[0] > iterationFinishDate.toISOString().split("T")[0]) {
 								addIterationEndRowBefore = true;
 							} else if (!addedIterationEndRow && i === storyPointChanges.length - 1) {
 								addIterationEndRowAfter = true;
@@ -485,7 +485,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		const currentDate = new Date(startDate);
 		const endDateOnly = new Date(endDate).toISOString().split("T")[0];
 
-		while (this.getDateStringFormat(currentDate, 'YYYYMMDD') <= endDateOnly) {
+		while (currentDate.toISOString().split("T")[0] <= endDateOnly) {
 			dateArray.push(new Date(currentDate).toLocaleDateString());
 			currentDate.setUTCDate(currentDate.getUTCDate() + steps);
 		}
