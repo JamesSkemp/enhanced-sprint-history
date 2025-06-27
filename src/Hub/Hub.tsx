@@ -19,6 +19,7 @@ import { IEnhancedSprintHistorySettings, IHubWorkItemHistory } from "./HubInterf
 import { IterationHistoryDisplay } from "./IterationHistoryDisplay";
 import { UserStoryListing } from "./UserStoryListing";
 import { Settings } from "./Settings";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface IHubContentState {
 	project: string;
@@ -156,7 +157,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				{this.state.selectedTeamIterationName && <h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} debugEnabled={this.state.debugEnabled} />
+				<ErrorBoundary>
+					<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} debugEnabled={this.state.debugEnabled} />
+				</ErrorBoundary>
 
 				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} />
 
