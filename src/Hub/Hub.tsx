@@ -45,6 +45,7 @@ interface IHubContentState {
 	projectWorkItemTypes: WorkItemType[];
 	settings: IEnhancedSprintHistorySettings;
 	doneLoading: boolean;
+	debugEnabled: string | undefined;
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
