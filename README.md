@@ -27,5 +27,7 @@ Publish to https://marketplace.visualstudio.com/manage/publishers
 
 Run `npx webpack serve`, navigate to https://localhost:3000/dist/Hub/Hub.html and accept the SSL cert, to then load the dev extension and develop locally.
 
+> Edge seems to work best when doing the above.
+
 ## Dependencies
 - [Run icon CC BY 3.0](https://game-icons.net/1x1/lorc/run.html).

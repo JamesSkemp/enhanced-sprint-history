@@ -81,6 +81,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			projectWorkItemTypes: [],
 			settings: { showAdditionalWorkItemTypes: false, additionalWorkItemTypes: [] },
 			doneLoading: false,
+			debugEnabled: undefined,
 		};
 	}
 
@@ -154,7 +155,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
 				{this.state.selectedTeamIterationName && <h2>Sprint History for {this.state.selectedTeamName} : {this.state.selectedTeamIterationName}</h2>}
 				{sprintDatesHeading(this.state.selectedTeamIteration)}
 
-				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} />
+				<IterationHistoryDisplay iteration={this.state.selectedTeamIteration} workItemHistory={this.state.workItemsHistory} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} debugEnabled={this.state.debugEnabled} />
 
 				<UserStoryListing iteration={this.state.selectedTeamIteration} workItems={this.state.workItems} projectWorkItemTypes={this.state.projectWorkItemTypes} doneLoading={this.state.doneLoading} />
 
@@ -192,6 +193,9 @@ class HubContent extends React.Component<{}, IHubContentState> {
 			if (queryParams.queryTeamIteration) {
 				this.queryParamsTeamIteration = queryParams.queryTeamIteration;
 			}
+		}
+		if (queryParams.debugEnabled) {
+			this.setState({ debugEnabled: queryParams.debugEnabled });
 		}
 
 		await this.getProjectWorkItemTypes();
@@ -436,7 +440,11 @@ class HubContent extends React.Component<{}, IHubContentState> {
 		const navService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
 		const hash = await navService.getQueryParams();
 
-		return { queryTeam: hash['selectedTeam'], queryTeamIteration: hash['selectedTeamIterationId'] };
+		return {
+			queryTeam: hash['selectedTeam'],
+			queryTeamIteration: hash['selectedTeamIterationId'],
+			debugEnabled: hash["debugMode"],
+		};
 	}
 
 	private updateQueryParams = async () => {

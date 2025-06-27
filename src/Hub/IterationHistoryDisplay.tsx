@@ -18,6 +18,7 @@ export interface IterationHistoryDisplayProps {
 	projectWorkItemTypes: WorkItemType[];
 	workItemHistory: IHubWorkItemHistory[];
 	doneLoading: boolean;
+	debugEnabled: string | undefined;
 }
 
 interface State {
@@ -26,6 +27,7 @@ interface State {
 	iterationWorkItemRevisions: IHubWorkItemIterationRevisions[],
 	changedWorkItems: ITypedWorkItem[],
 	flattenedRelevantRevisions: ITypedWorkItem[],
+	debugEnabled: string | undefined;
 }
 
 export class IterationHistoryDisplay extends React.Component<IterationHistoryDisplayProps, State> {
@@ -49,6 +51,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			iterationWorkItemRevisions: [],
 			changedWorkItems: [],
 			flattenedRelevantRevisions: [],
+			debugEnabled: props.debugEnabled,
 		};
 	}
 
@@ -251,6 +254,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 
 		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
 		const changedStoriesDates = [...changedStoriesByDate.keys()];
+		if (this.props.debugEnabled === 'debug') {
+			console.log(changedStoriesDates);
+		}
 		const completeHistoryDates: string[] = changedStoriesDates.length > 0 ? this.getDateRange(
 			changedStoriesDates[0],
 			changedStoriesDates[changedStoriesDates.length - 1]
