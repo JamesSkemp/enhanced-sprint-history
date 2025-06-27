@@ -67,6 +67,13 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			}
 		}
 
+		if (this.props.debugEnabled === 'debug') {
+			console.log(this.props.iteration?.attributes.startDate);
+			console.log(this.props.iteration?.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' }));
+			console.log(this.props.iteration?.attributes.finishDate);
+			console.log(this.props.iteration?.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' }));
+		}
+
 		const iterationWorkItemRevisions: IHubWorkItemIterationRevisions[] = this.props.workItemHistory.map(wiHistory => {
 			const typedWorkItems: ITypedWorkItem[] = wiHistory.revisions.map(workItem => getTypedWorkItem(workItem));
 
@@ -218,6 +225,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
 
 			return {
+				changedDate: wi.changedDate,
 				changedDateFull: wi.changedDateFull,
 				url: wi.url,
 				title: wi.title,
@@ -252,6 +260,11 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
+		if (this.props.debugEnabled === 'debug') {
+			console.log(storyPointChanges.map((spc) => {
+				return { changedDate: spc.changedDate, changedDateFull: spc.changedDateFull, id: spc.id };
+			}));
+		}
 		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
 		const changedStoriesDates = [...changedStoriesByDate.keys()];
 		if (this.props.debugEnabled === 'debug') {
@@ -261,6 +274,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			changedStoriesDates[0],
 			changedStoriesDates[changedStoriesDates.length - 1]
 		) : [];
+		if (this.props.debugEnabled === 'debug') {
+			console.log(changedStoriesDates);
+			console.log(completeHistoryDates);
+		}
 		const completeHistoryDatesData = this.getIterationDatesLastStoryPoints(completeHistoryDates, changedStoriesByDate);
 		this.dailyCompleteChartData = {
 			labels: completeHistoryDates,
@@ -279,6 +296,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			this.props.iteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })
 		) : [];
 		const iterationDatesData = this.getIterationDatesLastStoryPoints(iterationDates, changedStoriesByDate);
+		if (this.props.debugEnabled === 'debug') {
+			console.log(iterationDates);
+		}
 
 		this.dailyChartData = {
 			labels: iterationDates,
@@ -522,10 +542,10 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				// Isn't a match, so check if there's a previous date to carryover points from.
 				const length = iterationStoryPoints.size;
 				const iterator = iterationStoryPoints.keys();
-				let itemKey: string = iterator.next().value;
+				let itemKey: string | undefined = iterator.next().value;
 				let points = 0;
 				for (let i = 0; i < length; i++) {
-					if (new Date(iterationDates[0]) <= new Date(itemKey)) {
+					if (itemKey === undefined || new Date(iterationDates[0]) <= new Date(itemKey)) {
 						break;
 					}
 					const dateStoryPoints = iterationStoryPoints.get(itemKey)!;
