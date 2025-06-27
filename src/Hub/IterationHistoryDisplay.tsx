@@ -496,7 +496,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 	private groupStoryPointChanges(list: any[]): Map<string, any[]> {
 		const map = new Map();
 		list.forEach((item) => {
-			const key = item.changedDateFull.toLocaleDateString();
+			const key = this.getDateStringFormat(item.changedDateFull, 'YYYYMMDD');
 			const collection = map.get(key);
 			if (!collection) {
 				map.set(key, [item]);
