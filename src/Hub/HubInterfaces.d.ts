@@ -16,6 +16,24 @@ export interface ITypedWorkItem {
 	type: string;
 }
 
+export interface ITypedWorkItemChangeData {
+	id: number;
+	title: string;
+	url: string;
+	addedStoryPoints: number;
+	showAddedPoints: boolean;
+	subtractedStoryPoints: number;
+	showSubtractedPoints: boolean;
+	totalStoryPointsClass: string;
+	totalStoryPoints: number;
+	changedDate: string;
+	changedDateFull: Date;
+	workItemChange: ITypedWorkItemWithRevision;
+	changeCharacterCode: number;
+	state: string;
+	type: string;
+}
+
 export interface ITypedWorkItemWithRevision {
 	workItem: ITypedWorkItem;
 	lastRevision: ITypedWorkItem | undefined;

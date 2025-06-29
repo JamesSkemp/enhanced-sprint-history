@@ -2,7 +2,7 @@ import * as React from "react";
 import "./IterationHistoryDisplay.scss";
 
 import { TeamSettingsIteration } from "azure-devops-extension-api/Work";
-import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemWithRevision } from "./HubInterfaces";
+import { IHubWorkItemHistory, IHubWorkItemIterationRevisions, ITypedWorkItem, ITypedWorkItemChangeData, ITypedWorkItemWithRevision } from "./HubInterfaces";
 import { getFlattenedRelevantRevisions, getIterationRelevantWorkItems, getTypedWorkItem } from "./HubUtils";
 import { Card } from "azure-devops-ui/Card";
 import { CategoryScale, ChartData, Chart as ChartJs, LineElement, LinearScale, Point, PointElement, Tooltip } from "chart.js";
@@ -165,7 +165,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			console.log(this.state);
 		}*/
 
-		const storyPointChanges = changedWorkItems.map((wi, i, a) => {
+		const storyPointChanges: ITypedWorkItemChangeData[] = changedWorkItems.map((wi, i, a) => {
 			const workItemChange = getWorkItemChange(wi, i, a);
 			const storyClosed = isWorkItemClosed(wi);
 			const storyPointsChanged = workItemChange.change.indexOf('Story Points Changed') >= 0;
@@ -225,18 +225,18 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			const totalStoryPointsClass = 'story-points total' + (updatedTotalStoryPoints > 0 ? ' increase' : updatedTotalStoryPoints < 0 ? ' decrease' : '');
 
 			return {
-				changedDate: wi.changedDate,
-				changedDateFull: wi.changedDateFull,
-				url: wi.url,
-				title: wi.title,
 				id: wi.id,
-				workItemChange: workItemChange,
+				title: wi.title,
+				url: wi.url,
 				addedStoryPoints: addedStoryPoints,
 				showAddedPoints: showAddedPoints,
 				subtractedStoryPoints: subtractedStoryPoints,
 				showSubtractedPoints: showSubtractedPoints,
 				totalStoryPointsClass: totalStoryPointsClass,
 				totalStoryPoints: totalStoryPoints,
+				changedDate: wi.changedDate,
+				changedDateFull: wi.changedDateFull,
+				workItemChange: workItemChange,
 				changeCharacterCode: changeCharacterCode,
 				state: wi.state,
 				type: wi.type,
@@ -513,7 +513,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return dateArray;
 	}
 
-	private groupStoryPointChanges(list: any[]): Map<string, any[]> {
+	private groupStoryPointChanges(list: ITypedWorkItemChangeData[]): Map<string, ITypedWorkItemChangeData[]> {
 		const map = new Map();
 		list.forEach((item) => {
 			const key = item.changedDateFull.toLocaleDateString();
@@ -527,7 +527,7 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return map;
 	}
 
-	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, any[]>): (number | null)[] {
+	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, ITypedWorkItemChangeData[]>): (number | null)[] {
 		if (iterationDates.length === 0 || iterationStoryPoints.size === 0) {
 			return [];
 		}
