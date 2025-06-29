@@ -265,12 +265,13 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 				return { changedDate: spc.changedDate, changedDateFull: spc.changedDateFull, id: spc.id };
 			}));
 		}
-		const changedStoriesByDate = this.groupStoryPointChanges(storyPointChanges);
+		const changedStoriesByDate = this.groupStoryPointChangesByDate(storyPointChanges);
 		const changedStoriesDates = [...changedStoriesByDate.keys()];
 		if (this.props.debugEnabled === 'debug') {
 			console.log(changedStoriesDates);
 		}
-		const completeHistoryDates: string[] = changedStoriesDates.length > 0 ? this.getDateRange(
+
+		const completeHistoryDates: string[] = changedStoriesDates.length > 0 ? this.getDateRangeFromDates(
 			changedStoriesDates[0],
 			changedStoriesDates[changedStoriesDates.length - 1]
 		) : [];
@@ -513,6 +514,19 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return dateArray;
 	}
 
+	private getDateRangeFromDates(startDate: Date, endDate: Date, steps = 1): string[] {
+		const dateArray = [];
+		const currentDate = new Date(startDate);
+		const endDateOnly = new Date(endDate).toISOString().split("T")[0];
+
+		while (currentDate.toISOString().split("T")[0] <= endDateOnly) {
+			dateArray.push(new Date(currentDate).toLocaleDateString());
+			currentDate.setUTCDate(currentDate.getUTCDate() + steps);
+		}
+
+		return dateArray;
+	}
+
 	private groupStoryPointChanges(list: ITypedWorkItemChangeData[]): Map<string, ITypedWorkItemChangeData[]> {
 		const map = new Map();
 		list.forEach((item) => {
@@ -527,22 +541,46 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		return map;
 	}
 
-	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<string, ITypedWorkItemChangeData[]>): (number | null)[] {
+	private groupStoryPointChangesByDate(list: ITypedWorkItemChangeData[]): Map<Date, ITypedWorkItemChangeData[]> {
+		const map: Map<Date, ITypedWorkItemChangeData[]> = new Map();
+		list.forEach((item) => {
+			const key = item.changedDateFull;
+			const existingKey = Array.from(map.keys()).find(k => k.toLocaleDateString() === item.changedDateFull.toLocaleDateString());
+			const collection = map.get(existingKey || key);
+			if (!collection) {
+				map.set(key, [item]);
+			} else {
+				collection.push(item);
+			}
+		});
+		return map;
+	}
+
+	private getIterationDatesLastStoryPoints(iterationDates: string[], iterationStoryPoints: Map<Date, ITypedWorkItemChangeData[]>): (number | null)[] {
 		if (iterationDates.length === 0 || iterationStoryPoints.size === 0) {
 			return [];
 		}
 
 		const currentDate = new Date().toLocaleDateString();
 		const storyPoints: (number | null)[] = [];
+		const groupedStoryPointsKeys = Array.from(iterationStoryPoints.keys());
+		const groupedStoryPointsKeysLookup = groupedStoryPointsKeys.map(key => {
+			return {
+				mapKey: key,
+				dateOnlyKey: key.toLocaleDateString()
+			};
+		});
+
 		iterationDates.forEach((date, index) => {
-			const lastStoryPoints = iterationStoryPoints.get(date);
+			const originalDateKey = groupedStoryPointsKeysLookup.find(k => k.dateOnlyKey === date);
+			const lastStoryPoints = originalDateKey ? iterationStoryPoints.get(originalDateKey.mapKey) : undefined;
 			if (lastStoryPoints) {
 				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
 			} else if (index === 0) {
 				// Isn't a match, so check if there's a previous date to carryover points from.
 				const length = iterationStoryPoints.size;
 				const iterator = iterationStoryPoints.keys();
-				let itemKey: string | undefined = iterator.next().value;
+				let itemKey: Date | undefined = iterator.next().value;
 				let points = 0;
 				for (let i = 0; i < length; i++) {
 					if (itemKey === undefined || new Date(iterationDates[0]) <= new Date(itemKey)) {
