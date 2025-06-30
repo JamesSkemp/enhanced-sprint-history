@@ -292,10 +292,9 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			]
 		};
 
-		const iterationDates = this.props.iteration ? this.getDateRange(
-			this.props.iteration.attributes.startDate.toLocaleDateString(undefined, { timeZone: 'UTC' }),
-			this.props.iteration.attributes.finishDate.toLocaleDateString(undefined, { timeZone: 'UTC' })
-		) : [];
+		const iterationDates = this.props.iteration
+			? this.getDateRangeFromIteration(this.props.iteration)
+			: [];
 		const iterationDatesData = this.getIterationDatesLastStoryPoints(iterationDates, changedStoriesByDate);
 		if (this.props.debugEnabled === 'debug') {
 			console.log(iterationDates);
@@ -501,14 +500,17 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 		}
 	}
 
-	private getDateRange(startDate: string, endDate: string, steps = 1): string[] {
-		const dateArray = [];
-		const currentDate = new Date(startDate);
-		const endDateOnly = new Date(endDate).toISOString().split("T")[0];
+	private getDateRangeFromIteration(iteration: TeamSettingsIteration, steps = 1): string[] {
+		const dateArray: string[] = [];
 
-		while (currentDate.toISOString().split("T")[0] <= endDateOnly) {
-			dateArray.push(new Date(currentDate).toLocaleDateString());
-			currentDate.setUTCDate(currentDate.getUTCDate() + steps);
+		if (iteration) {
+			const currentDate = new Date(iteration.attributes.startDate);
+			const endDateOnly = new Date(iteration.attributes.finishDate).toISOString().split("T")[0];
+
+			while (currentDate.toISOString().split("T")[0] <= endDateOnly) {
+				dateArray.push(new Date(currentDate).toLocaleDateString(undefined, { timeZone: 'UTC' }));
+				currentDate.setUTCDate(currentDate.getUTCDate() + steps);
+			}
 		}
 
 		return dateArray;
