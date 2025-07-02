@@ -573,30 +573,49 @@ export class IterationHistoryDisplay extends React.Component<IterationHistoryDis
 			};
 		});
 
+		let lastChartStoryPoints: number | null = 0;
+		let doneAddingStoryPoints = false;
+		let iteratedToToday = false;
 		iterationDates.forEach((date, index) => {
-			const originalDateKey = groupedStoryPointsKeysLookup.find(k => k.dateOnlyKey === date);
-			const lastStoryPoints = originalDateKey ? iterationStoryPoints.get(originalDateKey.mapKey) : undefined;
-			if (lastStoryPoints) {
-				storyPoints.push(lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints);
-			} else if (index === 0) {
-				// Isn't a match, so check if there's a previous date to carryover points from.
-				const length = iterationStoryPoints.size;
-				const iterator = iterationStoryPoints.keys();
-				let itemKey: Date | undefined = iterator.next().value;
-				let points = 0;
-				for (let i = 0; i < length; i++) {
-					if (itemKey === undefined || new Date(iterationDates[0]) <= new Date(itemKey)) {
-						break;
-					}
-					const dateStoryPoints = iterationStoryPoints.get(itemKey)!;
-					points = dateStoryPoints[dateStoryPoints.length - 1].totalStoryPoints;
-					itemKey = iterator.next().value;
-				}
-				storyPoints.push(points);
-			} else if (new Date(currentDate) >= new Date(date)) {
-				storyPoints.push(storyPoints[index - 1]);
-			} else {
+			const dateIsToday = new Date(currentDate).toLocaleDateString() === date;
+			if (dateIsToday && !iteratedToToday) {
+				iteratedToToday = true;
+			}
+			if (iteratedToToday && !dateIsToday) {
+				doneAddingStoryPoints = true;
+			}
+
+			if (doneAddingStoryPoints) {
+				// If this is set, we're iterating through dates after the current date, so we'll have no data yet.
 				storyPoints.push(null);
+			} else {
+				const originalDateKey = groupedStoryPointsKeysLookup.find(k => k.dateOnlyKey === date);
+				const lastStoryPoints = originalDateKey ? iterationStoryPoints.get(originalDateKey.mapKey) : undefined;
+				if (lastStoryPoints) {
+					lastChartStoryPoints = lastStoryPoints[lastStoryPoints.length - 1].totalStoryPoints;
+				} else if (index === 0) {
+					// Isn't a match, so check if there's a previous date to carryover points from.
+					const length = iterationStoryPoints.size;
+					const iterator = iterationStoryPoints.keys();
+					let itemKey: Date | undefined = iterator.next().value;
+					let points = 0;
+					for (let i = 0; i < length; i++) {
+						if (itemKey === undefined) {
+							lastChartStoryPoints = points;
+							break;
+						}
+						const dateStoryPoints = iterationStoryPoints.get(itemKey)!;
+						points = dateStoryPoints[dateStoryPoints.length - 1].totalStoryPoints;
+						itemKey = iterator.next().value;
+					}
+				} else if (dateIsToday) {
+					//
+					lastChartStoryPoints = storyPoints[index - 1];
+					doneAddingStoryPoints = true;
+				} else {
+					// Do nothing.
+				}
+				storyPoints.push(lastChartStoryPoints);
 			}
 		});
 
